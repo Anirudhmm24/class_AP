@@ -2,8 +2,11 @@
 
 export(CLASS)
 export(FeatureSRHT)
+export(HT)
+export(HTCLASS)
 export(IBOSS)
 export(SRHT)
+export(test_train_split)
 import(Rcpp)
 import(bigmemory)
 import(data.table)

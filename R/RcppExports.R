@@ -5,6 +5,10 @@ run_featuresrht_wrapper <- function(X, y, X_test_in, y_test_in, r, bins, alpha, 
     .Call(`_class_run_featuresrht_wrapper`, X, y, X_test_in, y_test_in, r, bins, alpha, run_uni, run_top, run_lev, run_sup)
 }
 
+HT_cpp <- function(X, y) {
+    .Call(`_class_HT_cpp`, X, y)
+}
+
 IBOSS_cpp <- function(X, y, k, intercept = FALSE) {
     .Call(`_class_IBOSS_cpp`, X, y, k, intercept)
 }
