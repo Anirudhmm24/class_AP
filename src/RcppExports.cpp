@@ -32,6 +32,18 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// HT_cpp
+Rcpp::List HT_cpp(Eigen::MatrixXd X, Eigen::VectorXd y);
+RcppExport SEXP _class_HT_cpp(SEXP XSEXP, SEXP ySEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Eigen::MatrixXd >::type X(XSEXP);
+    Rcpp::traits::input_parameter< Eigen::VectorXd >::type y(ySEXP);
+    rcpp_result_gen = Rcpp::wrap(HT_cpp(X, y));
+    return rcpp_result_gen;
+END_RCPP
+}
 // IBOSS_cpp
 Rcpp::List IBOSS_cpp(const Eigen::MatrixXd& X, const Eigen::VectorXd& y, int k, bool intercept);
 RcppExport SEXP _class_IBOSS_cpp(SEXP XSEXP, SEXP ySEXP, SEXP kSEXP, SEXP interceptSEXP) {
@@ -125,6 +137,7 @@ END_RCPP
 
 static const R_CallMethodDef CallEntries[] = {
     {"_class_run_featuresrht_wrapper", (DL_FUNC) &_class_run_featuresrht_wrapper, 11},
+    {"_class_HT_cpp", (DL_FUNC) &_class_HT_cpp, 2},
     {"_class_IBOSS_cpp", (DL_FUNC) &_class_IBOSS_cpp, 4},
     {"_class_kBOSS", (DL_FUNC) &_class_kBOSS, 4},
     {"_class_SRHT_cpp", (DL_FUNC) &_class_SRHT_cpp, 3},
