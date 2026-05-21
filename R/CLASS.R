@@ -1,3 +1,4 @@
+
 #' CLASS
 #'
 #' Runs the CLASS algorithm on given dataset.
@@ -75,20 +76,35 @@ CLASS <- function(X = NULL, y = NULL, csv = NULL, header = FALSE, nSample = -1, 
   accumulator <- function(acc, vec) {
     acc + vec
   }
-  freq_count <- foreach(i = 1:nTimes, .packages = c("bigmemory", "glmnet", "class"), .combine = accumulator) %dopar% {
-    if (i %% 1 == 0) paste(".") # Need an alternative here cuz parallel sessions?
+
+  # Workaround to multiple attaches per thread
+  # work_distr <- nTimes %/% nC per core and accumulate locally
+  # work_distr[nC] <- work_distr[nC] + (nTimes %% nC) (leftover work for last core)
+
+  temp <- nTimes %% nC
+  set.seed(42)
+  freq_count <- foreach(i = 1:nC, .packages = c("bigmemory", "glmnet", "class"), .combine = accumulator) %dopar% {
 
     X_ref <- attach.big.matrix(X_desc)
     y_ref <- attach.big.matrix(y_desc)
-    set.seed(42 + i)
-    idx <- sample(seq_len(nrow(X_ref)), nSample)
-    X_sub <- X_ref[idx, , drop = FALSE]
-    y_sub <- y_ref[idx]
 
-    fit <- glmnet::cv.glmnet(x = X_sub, y = y_sub, alpha = 1)
-    coefs <- coef(fit, s = "lambda.min")[-1]
-    as.numeric(coefs != 0)
+    local_accumulator <- rep(0, p)
+
+    work <- if (i <= temp) nTimes %/% nC + 1 else nTimes %/% nC
+
+    for (j in 1:work) {
+      idx <- sample(seq_len(nrow(X_ref)), nSample)
+      X_sub <- X_ref[idx, , drop = FALSE]
+      y_sub <- y_ref[idx]
+
+      fit <- glmnet::cv.glmnet(x = X_sub, y = y_sub, alpha = 1)
+      coefs <- coef(fit, s = "lambda.min")[-1]
+      local_accumulator <- local_accumulator + as.numeric(coefs != 0)
+    }
+
+    local_accumulator
   }
+
   gc() # Should check if this affects runtime
   stopCluster(cl)
 
@@ -126,3 +142,4 @@ CLASS <- function(X = NULL, y = NULL, csv = NULL, header = FALSE, nSample = -1, 
     r_squared = r_squared
   )))
 }
+
