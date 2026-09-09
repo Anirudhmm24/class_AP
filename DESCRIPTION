@@ -1,11 +1,22 @@
-Package: class
-Title: What the Package Does (One Line, Title Case)
+Package: sublime
+Title: Sub-Data Selection
 Version: 0.0.0.9000
-Authors@R: 
-    person("First", "Last", , "first.last@example.com", role = c("aut", "cre"))
-Description: What the package does (one paragraph).
-License: `use_mit_license()`, `use_gpl3_license()` or friends to pick a
-    license
+Authors@R: c(
+    person("Aditi", "Vaidya",       email = "aditiv2004@googlemail.com", role = "aut"),
+    person("Anirudh", "Narayanan",  email = "narayanananirudh1@gmail.com", role = "aut"),
+    person("Anirudh", "Prasanna",   email = "anirudhp425@gmail.com", role = "aut"),
+    person("Arjun", "Arunachalam",  email = "person3@example.com", role = "aut"),
+    person("Deenabandhan", "N",     email = "person6@example.com", role = "aut"),
+    person("Mohit", "Rathi",        email = "mohitrathi2490@gmail.com", role = "aut"))
+Description:
+    Provides methods for efficient subdata selection for large-scale and high-dimensional regression problems. 
+    The package implements Information-Based Optimal Subdata Selection (IBOSS), Generalized IBOSS (GenIBOSS), 
+    Combining Lasso and Subdata Selection (CLASS), and Subsampled Randomized Hadamard Transform (SRHT). 
+    CLASS identifies active variables through repeated LASSO fits on smaller data subsets and subsequently 
+    uses IBOSS to select an informative subset of observations for regression. The package also implements 
+    HT-CLASS, which applies a Hadamard transform before the row-sampling step to improve the identification 
+    of active variables whose signals are concentrated in a small subset of observations.
+License: GPL-3
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.3

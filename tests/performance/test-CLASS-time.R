@@ -1,4 +1,3 @@
-
 test_that("time test", {
   iter <- 10
   total_time <- 0
@@ -36,3 +35,5 @@ test_that("time test", {
   average_time <- total_time / iter
   print(average_time)
 })
+
+
