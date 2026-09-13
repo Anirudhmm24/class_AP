@@ -1,4 +1,4 @@
-# class
+# sublime
 
 ## Overview
 
@@ -15,21 +15,16 @@ These algorithms are:
 ## Installation
 
 ```r
-# Install 'devtools' (if you don't already have it)
-install.packages("devtools")
-
-# Install the package from GitHub
-devtools::install_github("Mathematics-Club-IIT-Madras/class")
-
-# Load the package
-library(class)
+# 
+install.packages("sublime")
+library(sublime)
 ```
 
 ## Usage
 
 All functions accept either a `X`/`y` pair or a `csv` path (in
 which case the last column of the file is treated as the response). Below
-are minimal examples for each exported function. See `vignette("class")`
+are minimal examples for each exported function. See `vignette("sublime")`
 for a more detailed walkthrough.
 
 ### IBOSS()
@@ -38,7 +33,7 @@ Selects a deterministic, information-maximizing subsample for ordinary
 linear regression.
 
 ```r
-library(class)
+library(sublime)
 
 set.seed(42)
 X <- matrix(rnorm(20000 * 5), ncol = 5)
