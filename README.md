@@ -15,7 +15,6 @@ These algorithms are:
 ## Installation
 
 ```r
-# 
 install.packages("sublime")
 library(sublime)
 ```
