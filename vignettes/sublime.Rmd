@@ -160,9 +160,12 @@ res <- CLASS(
   X = X,
   y = y,
   nSample = 1000,
-  nTimes = 100,
+  nTimes = 50, 
   k = 2000
 )
+
+#The originial algorithm uses an nTimes of 100. We use a smaller nTimes
+#here for illustrative purposes.
 
 res$selected_indices  # active variables
 res$beta_final         # full-length coefficient vector (zeros for excluded vars)
@@ -175,7 +178,7 @@ variables selected as active, the raw selection frequency counts, and
 in-sample MSE / $R^2$ computed on the full dataset using the final
 coefficients.
 
-## HTCLASS: CLASS with a Hadamard Preconditioner
+## HTCLASS: CLASS + Hadamard Transform
 
 `HTCLASS()` follows the same procedure as `CLASS()`, but first applies a
 Hadamard transform (`HT()`) to `X` and `y` before running the subsampled
