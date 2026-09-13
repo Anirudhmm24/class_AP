@@ -1,8 +1,8 @@
 ---
-title: "Getting Started with class"
+title: "Getting Started with sublime"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Getting Started with class}
+  %\VignetteIndexEntry{Getting Started with sublime}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -18,7 +18,7 @@ knitr::opts_chunk$set(
 
 ## Introduction
 
-`class` implements some sub-data selection and randomized
+'sublime` implements some sub-data selection and randomized
 sketching methods for speeding up linear regression, feature selection and 
 generalized linear models on large datasets. Rather than fitting a 
 model on all $N$ observations, each method constructs a
@@ -38,7 +38,7 @@ The package provides five functions:
 This vignette walks through each function with a small example.
 
 ```{r}
-library(class)
+library(sublime)
 ```
 
 ## IBOSS: Information-Based Optimal Subdata Selection
