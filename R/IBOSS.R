@@ -10,7 +10,7 @@
 #' @param intercept Logical; whether first column is intercept.
 #' @param header Logical; whether the csv files contains a header row.
 #'
-#' @useDynLib class, .registration = TRUE
+#' @useDynLib sublime, .registration = TRUE
 #' @importFrom Rcpp evalCpp
 #'
 #' @return A list wi#' Information Based Optimal Subdata Selection
@@ -42,7 +42,7 @@
 #' @param header Logical; indicating whether the CSV file specified by
 #'   `csv` contains a header row.
 #'
-#' @useDynLib iboss, .registration = TRUE
+#' @useDynLib sublime, .registration = TRUE
 #' @importFrom Rcpp evalCpp
 #'
 #' @details

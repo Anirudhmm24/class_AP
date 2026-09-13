@@ -35,7 +35,7 @@
 #' @param header Logical indicating whether the CSV file specified by
 #'   `csv` contains a header row.
 #'
-#' @useDynLib iboss, .registration = TRUE
+#' @useDynLib sublime, .registration = TRUE
 #' @importFrom Rcpp evalCpp
 #' @import fastglm
 #'
