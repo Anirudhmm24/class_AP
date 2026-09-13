@@ -5,12 +5,12 @@
 sublime is a library which contains implementations of some sub-data selection and randomized sketching algorithms, providing subroutines for speeding up linear regression, lasso and generalized linear models.
 
 These algorithms are:
-- IBOSS(): Information-Based Optimal Subdata Selection. Reduces the size of the data matrix by choosing a subset of data, so that the runtime for linear regression is smaller.
-- GenIBOSS(): Generalized IBOSS. IBOSS for generalized linear models.
-- CLASS(): Combined Lasso And Subdata Selection. Reduces the time taken to run lasso using sub-data selection.
-- SRHT(): Randomized sketching method, reduces the runtime for linear regression by preconditioning the data matrix and then sub-sampling.
-- HTCLASS(): An variant of CLASS which works by preconditioning the data with a Hadamard matrix in order to improve accuracy for certain datasets.
-- CLEAR(): A variant of CLASS which allows for a lesser number of iterations than CLASS, by exiting early according to some criterion.
+- `IBOSS()`: Information-Based Optimal Subdata Selection. Reduces the size of the data matrix by choosing a subset of data, so that the runtime for linear regression is smaller.
+- `GenIBOSS()`: Generalized IBOSS. IBOSS for generalized linear models.
+- `CLASS()`: Combined Lasso And Subdata Selection. Reduces the time taken to run lasso using sub-data selection.
+- `SRHT()`: Randomized sketching method, reduces the runtime for linear regression by preconditioning the data matrix and then sub-sampling.
+- `HTCLASS()`: An variant of CLASS which works by preconditioning the data with a Hadamard matrix in order to improve accuracy for certain datasets.
+- `CLEAR()`: A variant of CLASS which allows for a lesser number of iterations than CLASS, by exiting early according to some criterion.
 
 ## Installation
 
