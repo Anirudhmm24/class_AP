@@ -4,7 +4,7 @@ Version: 0.0.0.9000
 Authors@R: c(
     person("Aditi", "Vaidya",       email = "aditiv2004@googlemail.com", role = "aut"),
     person("Anirudh", "Narayanan",  email = "narayanananirudh1@gmail.com", role = "aut"),
-    person("Anirudh", "Prasanna",   email = "anirudhp425@gmail.com", role = "aut","cre"),
+    person("Anirudh", "Prasanna",   email = "anirudhp425@gmail.com", role = c("aut","cre")),
     person("Arjun", "Arunachalam",  email = "arjun.conjecture@gmail.com", role = "aut"),
     person("Deenabandhan", "N",     email = "deenabandhann@gmail.com", role = "aut"),
     person("Mohit", "Rathi",        email = "mohitrathi2490@gmail.com", role = "aut"))
