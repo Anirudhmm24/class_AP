@@ -7,6 +7,6 @@
 # * https://testthat.r-lib.org/articles/special-files.html
 
 library(testthat)
-library(class)
+library(sublime)
 
-test_check("class")
+test_check("sublime")

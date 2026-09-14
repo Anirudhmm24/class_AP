@@ -16,6 +16,14 @@ iboss_random_fixture <- function(n = 24, p = 4, seed = 42) {
 	list(X = X, y = y)
 }
 
+srht_random_fixture <- function(n = 64, p = 4, seed = 7) {
+	set.seed(seed)
+	X <- matrix(rnorm(n * p), nrow = n, ncol = p)
+	y <- rnorm(n)
+
+	list(X = X, y = y)
+}
+
 geniboss_family_fixture <- function(n = 80, p = 4, seed = 101) {
 	set.seed(seed)
 	X <- matrix(rnorm(n * p), nrow = n, ncol = p)
