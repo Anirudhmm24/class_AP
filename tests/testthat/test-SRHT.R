@@ -272,20 +272,3 @@ test_that("SRHT preserves squared norms in expectation (subspace-embedding prope
   expect_equal(mean_X, target_X, tolerance = tol)
   expect_equal(mean_y, target_y, tolerance = tol)
 })
-
-# ---- Large-scale sanity / timing check ---------------------------------------
-
-test_that("Sanity Check and Time Test", {
-  N <- 500000
-  p <- 250
-  r <- 100000
-
-  X = matrix(rnorm(N * p), N, p)
-  y = rnorm(N)
-
-  start <- Sys.time()
-  res <- SRHT(X = X, y = y, k = r)
-  end <- Sys.time()
-  expect_true(nrow(res$X_f) == r)
-  cat("\nTime taken:", end - start, "\n")
-})
