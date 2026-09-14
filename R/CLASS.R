@@ -12,7 +12,7 @@
 #' @param k Integer; number of rows in the subselection using IBOSS.
 #'
 #'
-#' @useDynLib class, .registration = TRUE
+#' @useDynLib sublime, .registration = TRUE
 #' @importFrom Rcpp evalCpp
 #' @importFrom stats coef
 #' @importFrom stats lm.fit

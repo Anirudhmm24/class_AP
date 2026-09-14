@@ -1,0 +1,15 @@
+"metric","mean","median"
+"exact_active_set_recovery",1,1
+"false_positive_rate",0,0
+"false_negative_rate",0,0
+"jaccard_to_reference",1,1
+"coefficient_error",0.0228252420009161,0.0223700439830675
+"test_mse",1.0088627811462,1.01229744266141
+"test_r_squared",0.980347339635902,0.980217239827402
+"iterations_used",36,35
+"wall_clock_seconds",28.5540000000001,30.6300000000001
+"iterations_saved",64,65
+"wall_clock_seconds_saved",43.5959999999999,44.6399999999999
+"early_exit",1,1
+"incorrect_early_exit",0,0
+"max_iter_without_convergence",0,0

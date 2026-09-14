@@ -20,7 +20,7 @@
 #'
 #' @return The result list returned by the underlying C++ \code{HT_cpp} function.
 #'
-#' @useDynLib class, .registration = TRUE
+#' @useDynLib sublime, .registration = TRUE
 #' @import Rcpp
 #' @importFrom data.table fread
 #' @export
