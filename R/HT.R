@@ -18,7 +18,20 @@
 #' @param header Boolean variable. Indicates if the CSV file contains a header row.
 #'   Passed directly to \code{data.table::fread}. Defaults to \code{FALSE}.
 #'
-#' @return The result list returned by the underlying C++ \code{HT_cpp} function.
+#' @return A list containing:
+#' \itemize{
+#'   \item \code{X_f}: Padded and Hadamard-transformed predictor matrix.
+#'   \item \code{y_f}: Padded and Hadamard-transformed response vector.
+#' }
+#'
+#' @examples
+#' set.seed(42)
+#' X <- matrix(rnorm(100), nrow = 20, ncol = 5)
+#' y <- rnorm(20)
+#'
+#' res <- HT(X = X, y = y)
+#' dim(res$X_f)
+#' length(res$y_f)
 #'
 #' @useDynLib sublime, .registration = TRUE
 #' @import Rcpp
@@ -43,6 +56,9 @@ HT <- function(X = NULL, y = NULL, csv = NULL, intercept = FALSE, header = FALSE
 
   if (nrow(X) != length(y)) stop("X and y must have same number of rows.")
   if (!is.numeric(X) || !is.numeric(y)) stop("X and y must be numeric.")
+  if (nrow(X) < 1L) stop("X must have at least one row.")
+  if (ncol(X) < 1L) stop("X must have at least one predictor column.")
+  if (any(!is.finite(X)) || any(!is.finite(y))) stop("X and y must contain only finite numeric values.")
 
   if (intercept) {
     first_col_is_ones <- all(abs(X[,1] - 1) < 1e-9)

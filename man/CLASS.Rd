@@ -121,7 +121,11 @@ using these predictions on the full input dataset rather than only
 on the selected subdata.
 
 CLASS uses parallel processing to distribute the repeated LASSO fits
-across the available CPU cores.
+across the available CPU cores. On Unix-alike systems, it uses
+\code{\link[parallel]{mclapply}} for efficient memory-sharing process
+forks. On Windows, it falls back to \code{foreach} and
+\code{bigmemory} to manage parallel execution without excessive memory
+duplication.
 }
 \examples{
 set.seed(42)

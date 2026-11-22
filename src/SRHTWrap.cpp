@@ -1,7 +1,7 @@
 // [[Rcpp::depends(RcppEigen)]]
 
 #include <RcppEigen.h>
-#include "SRHT.hpp"
+#include "SRHT.h"
 
 // [[Rcpp::export]]
 Rcpp::List SRHT_cpp(Eigen::MatrixXd X, Eigen::VectorXd y, int r)

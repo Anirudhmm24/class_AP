@@ -100,6 +100,13 @@ so standard CLASS may miss those predictors in some LASSO fits. By mixing
 observations before subsampling, HT-CLASS can make their signal more
 consistently represented in the transformed subsamples. This is a motivating
 example rather than a guarantee of improved selection in every dataset.
+
+HTCLASS uses parallel processing to distribute the repeated LASSO fits
+across the available CPU cores. On Unix-alike systems, it uses
+\code{\link[parallel]{mclapply}} for efficient memory-sharing process
+forks. On Windows, it falls back to \code{foreach} and
+\code{bigmemory} to manage parallel execution without excessive memory
+duplication.
 }
 \examples{
 set.seed(42)

@@ -1,19 +1,4 @@
-#' IBOSS
-#'
-#' Runs the IBOSS algorithm on given dataset.
-#'
-#' @param X Numeric matrix of predictors.
-#' @param y Numeric response vector.
-#' @param csv Path to CSV file (alternative to X, y).
-#'            Last column is assumed to be response.
-#' @param k Integer; Number of points to select.
-#' @param intercept Logical; whether first column is intercept.
-#' @param header Logical; whether the csv files contains a header row.
-#'
-#' @useDynLib sublime, .registration = TRUE
-#' @importFrom Rcpp evalCpp
-#'
-#' @return A list wi#' Information Based Optimal Subdata Selection
+#' Information-Based Optimal Subdata Selection (IBOSS)
 #'
 #' Select a deterministic subdata using the IBOSS (Information-Based
 #' Optimal Subdata Selection) algorithm. IBOSS is designed for large-scale
@@ -23,26 +8,21 @@
 #' @param X A numeric matrix of predictor variables. Each row corresponds
 #'   to an observation and each column to a predictor. Ignored if `csv`
 #'   is provided.
-#'
 #' @param y A numeric response vector with one element for each row of
 #'   `X`. Ignored if `csv` is provided.
-#'
 #' @param csv An optional character string specifying the path to a CSV
 #'   file containing the dataset. When supplied, the last column is assumed
 #'   to contain the response variable and all preceding columns are treated
 #'   as predictors. If `csv` is provided, `X` and `y` should be `NULL`.
-#'
-#' @param k Integer;  A positive integer specifying the number of observations to
+#' @param k A positive integer specifying the number of observations to
 #'   select using the IBOSS algorithm.
-#'
 #' @param intercept Logical; indicating whether the first column of `X`
 #'   corresponds to an intercept term. If `TRUE`, the intercept column is
-#'   excluded from the subdata selection criterion.
-#'
+#'   excluded from the subdata selection criterion. Defaults to `FALSE`.
 #' @param header Logical; indicating whether the CSV file specified by
-#'   `csv` contains a header row.
-#'
-#' @param add_logs Logical indicating whether model fit is to be returned
+#'   `csv` contains a header row. Defaults to `FALSE`.
+#' @param add_logs Logical; indicating whether model fit is to be returned.
+#'   Defaults to `FALSE`.
 #'
 #' @useDynLib sublime, .registration = TRUE
 #' @importFrom Rcpp evalCpp

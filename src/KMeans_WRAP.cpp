@@ -2,13 +2,15 @@
 
 #include <RcppEigen.h>
 #include <Rcpp.h>
+#ifdef _OPENMP
 #include <omp.h>
+#endif
 #include <vector>
 #include <algorithm>
 #include <random>
 #include <utility>
 #include "iboss.h"
-#include "KMeans.hpp"
+#include "KMeans.h"
 
 // [[Rcpp::export]]
 Rcpp::List kBOSS(Eigen::MatrixXd& X, Eigen::VectorXd& y, Rcpp::NumericVector freqs, int k_iboss) {
@@ -32,6 +34,6 @@ Rcpp::List kBOSS(Eigen::MatrixXd& X, Eigen::VectorXd& y, Rcpp::NumericVector fre
 }
 
 // [[Rcpp::export]]
-Rcpp::NumericVector kmeans2(Rcpp::NumericVector &freq_count) {
+Rcpp::IntegerVector kmeans2(Rcpp::NumericVector &freq_count) {
 	return Rcpp::wrap(KMeans2(Rcpp::as<std::vector<double>>(freq_count)));
 }

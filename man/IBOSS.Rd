@@ -2,7 +2,7 @@
 % Please edit documentation in R/IBOSS.R
 \name{IBOSS}
 \alias{IBOSS}
-\title{IBOSS}
+\title{Information-Based Optimal Subdata Selection (IBOSS)}
 \usage{
 IBOSS(
   X = NULL,
@@ -27,26 +27,20 @@ file containing the dataset. When supplied, the last column is assumed
 to contain the response variable and all preceding columns are treated
 as predictors. If \code{csv} is provided, \code{X} and \code{y} should be \code{NULL}.}
 
-\item{k}{Integer;  A positive integer specifying the number of observations to
+\item{k}{A positive integer specifying the number of observations to
 select using the IBOSS algorithm.}
 
 \item{intercept}{Logical; indicating whether the first column of \code{X}
 corresponds to an intercept term. If \code{TRUE}, the intercept column is
-excluded from the subdata selection criterion.}
+excluded from the subdata selection criterion. Defaults to \code{FALSE}.}
 
 \item{header}{Logical; indicating whether the CSV file specified by
-\code{csv} contains a header row.}
+\code{csv} contains a header row. Defaults to \code{FALSE}.}
 
-\item{add_logs}{Logical indicating whether model fit is to be returned}
+\item{add_logs}{Logical; indicating whether model fit is to be returned.
+Defaults to \code{FALSE}.}
 }
 \value{
-A list wi#' Information Based Optimal Subdata Selection
-
-Select a deterministic subdata using the IBOSS (Information-Based
-Optimal Subdata Selection) algorithm. IBOSS is designed for large-scale
-linear regression problems where fitting a model on the full dataset is
-computationally expensive.
-
 A list containing the following components:
 
 \itemize{
@@ -59,7 +53,10 @@ containing the responses corresponding to the selected observations.
 }
 }
 \description{
-Runs the IBOSS algorithm on given dataset.
+Select a deterministic subdata using the IBOSS (Information-Based
+Optimal Subdata Selection) algorithm. IBOSS is designed for large-scale
+linear regression problems where fitting a model on the full dataset is
+computationally expensive.
 }
 \details{
 The IBOSS (Information-Based Optimal Subdata Selection) algorithm is

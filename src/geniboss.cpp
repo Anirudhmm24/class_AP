@@ -4,7 +4,9 @@
 #include <cstdint>
 #include <numeric>
 #include <vector>
+#ifdef _OPENMP
 #include <omp.h>
+#endif
 
 #include "geniboss.h"
 
@@ -208,7 +210,11 @@ void geniboss(
     std::vector<int> nums;
     nums.reserve(static_cast<std::size_t>(u));
 
+#ifdef _OPENMP
     const int max_threads = std::max(1, omp_get_max_threads());
+#else
+    const int max_threads = 1;
+#endif
     std::vector<TopHeap> local_max(static_cast<std::size_t>(max_threads));
     std::vector<BottomHeap> local_min(static_cast<std::size_t>(max_threads));
     for (int t = 0; t < max_threads; ++t) {
@@ -228,7 +234,11 @@ void geniboss(
 
     #pragma omp parallel shared(current_offset, nums, selected, local_max, local_min, scratch, winners_max, winners_min, phase_r)
     {
+#ifdef _OPENMP
         const int tid = omp_get_thread_num();
+#else
+        const int tid = 0;
+#endif
         TopHeap& max_heap = local_max[static_cast<std::size_t>(tid)];
         BottomHeap& min_heap = local_min[static_cast<std::size_t>(tid)];
 

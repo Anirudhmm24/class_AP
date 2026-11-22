@@ -1,6 +1,6 @@
 Package: sublime
-Title: Sub-Data Selection
-Version: 0.0.0.9000
+Title: Subdata Selection for Large-Scale Linear Regression
+Version: 0.1.0
 Authors@R: c(
     person("Aditi", "Vaidya",       email = "aditiv2004@googlemail.com", role = c("aut", "cre")),
     person("Anirudh", "Narayanan",  email = "narayanananirudh1@gmail.com", role = "aut"),
@@ -8,15 +8,20 @@ Authors@R: c(
     person("Arjun", "Arunachalam",  email = "arjun.actual.email@example.com", role = "aut"),
     person("Deenabandhan", "N",     email = "deenabandhann@gmail.com", role = "aut"),
     person("Mohit", "Rathi",        email = "mohitrathi2490@gmail.com", role = "aut"))
+Author: Aditi Vaidya [aut, cre], Anirudh Narayanan [aut], Anirudh Prasanna [aut], Arjun Arunachalam [aut], Deenabandhan N [aut], Mohit Rathi [aut]
+Maintainer: Aditi Vaidya <aditiv2004@googlemail.com>
 Description:
     Provides methods for efficient subdata selection for large-scale and high-dimensional regression problems. 
-    The package implements Information-Based Optimal Subdata Selection (IBOSS), Generalized IBOSS (GenIBOSS), 
-    Combining Lasso and Subdata Selection (CLASS), and Subsampled Randomized Hadamard Transform (SRHT). 
+    The package implements Information-Based Optimal Subdata Selection (IBOSS) by Wang, Yang, and Stufken (2019) <doi:10.1080/01621459.2017.1408468>, 
+    Generalized IBOSS (GenIBOSS) for non-linear models by Yu, Liu, and Wang (2023) <doi:10.1007/s00362-023-01430-3>, 
+    Combining Lasso and Subdata Selection (CLASS) by Singh and Stufken (2023) <doi:10.51387/23-NEJSDS36>, 
+    and Subsampled Randomized Hadamard Transform (SRHT) by Tropp et al. (2017) <doi:10.1137/17M1111590>. 
     CLASS identifies active variables through repeated LASSO fits on smaller data subsets and subsequently 
     uses IBOSS to select an informative subset of observations for regression. The package also implements 
     HT-CLASS, which applies a Hadamard transform before the row-sampling step to improve the identification 
     of active variables whose signals are concentrated in a small subset of observations.
 License: GPL-3
+SystemRequirements: C++20
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.3
@@ -32,5 +37,8 @@ Imports:
     doParallel,
     foreach
 Suggests: 
-    testthat (>= 3.0.0)
+    testthat (>= 3.0.0),
+    knitr,
+    rmarkdown
+VignetteBuilder: knitr
 Config/testthat/edition: 3

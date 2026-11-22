@@ -38,7 +38,7 @@ BEGIN_RCPP
 END_RCPP
 }
 // kmeans2
-Rcpp::NumericVector kmeans2(Rcpp::NumericVector& freq_count);
+Rcpp::IntegerVector kmeans2(Rcpp::NumericVector& freq_count);
 RcppExport SEXP _sublime_kmeans2(SEXP freq_countSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;

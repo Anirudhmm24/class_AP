@@ -1,2 +1,13 @@
 ^.*\.Rproj$
 ^\.Rproj\.user$
+^\.\.Rcheck$
+^.*\.Rcheck$
+^tests/performance
+^tests/testthat/benchmark-output
+^tests/testthat/ht_tests
+^tests/testthat/test_gen\.py$
+^cran-comments\.md$
+^\.git$
+^\.gitignore$
+^\.Rhistory$
+^sublime_.*\.tar\.gz$

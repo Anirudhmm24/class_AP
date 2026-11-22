@@ -25,11 +25,25 @@ to standardizes the intercept term. Defaults to \code{FALSE}.}
 Passed directly to \code{data.table::fread}. Defaults to \code{FALSE}.}
 }
 \value{
-The result list returned by the underlying C++ \code{HT_cpp} function.
+A list containing:
+\itemize{
+\item \code{X_f}: Padded and Hadamard-transformed predictor matrix.
+\item \code{y_f}: Padded and Hadamard-transformed response vector.
+}
 }
 \description{
 This function acts as a wrapper to prepare data and performs the
 hadamard transform on it. It handles input from either in-memory matrices
 or CSV files, checks for an intercept, ensures correct data types, and
 passes the data to the optimized C++ implementation.
+}
+\examples{
+set.seed(42)
+X <- matrix(rnorm(100), nrow = 20, ncol = 5)
+y <- rnorm(20)
+
+res <- HT(X = X, y = y)
+dim(res$X_f)
+length(res$y_f)
+
 }

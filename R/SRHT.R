@@ -88,6 +88,13 @@ SRHT <- function(X = NULL, y = NULL, csv = NULL, k, intercept = FALSE, header = 
 
   if (nrow(X) != length(y)) stop("X and y must have same number of rows.")
   if (!is.numeric(X) || !is.numeric(y)) stop("X and y must be numeric.")
+  if (nrow(X) < 1L) stop("X must have at least one row.")
+  if (ncol(X) < 1L) stop("X must have at least one predictor column.")
+  if (any(!is.finite(X)) || any(!is.finite(y))) stop("X and y must contain only finite numeric values.")
+
+  if (missing(k) || !is.numeric(k) || length(k) != 1L || is.na(k) || !is.finite(k) || k <= 0 || k != as.integer(k)) {
+    stop("k must be a positive finite integer.")
+  }
 
   if (intercept) {
     first_col_is_ones <- all(abs(X[,1] - 1) < 1e-9)

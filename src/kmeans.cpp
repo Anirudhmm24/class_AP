@@ -3,7 +3,7 @@
 #include <cmath>
 #include <utility>
 
-#include "KMeans.hpp"
+#include "KMeans.h"
 
 std::vector<int> KMeans2(const std::vector<double>& counts) {
     int q = counts.size();

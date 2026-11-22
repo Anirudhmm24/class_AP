@@ -123,7 +123,7 @@ test_that("early-exit CLASS respects warm-up and maximum iteration cap", {
   )
 
   expect_false(result$stopped_early)
-  expect_equal(result$iterations_run, 2)
+  expect_equal(result$iterations_used, 2)
   expect_equal(dim(result$pi_hat), c(4, 2))
   expect_equal(dim(result$selection_counts), c(4, 2))
   expect_equal(nrow(result$checkpoints), 1)

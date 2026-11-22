@@ -8,7 +8,8 @@ void IBOSS(
     const Eigen::Ref<const Eigen::VectorXd>& y,
     Eigen::MatrixXd& X_iboss,
     Eigen::VectorXd& y_iboss,
-    int k
+    int k,
+    bool intercept = false
 );
 
 #endif

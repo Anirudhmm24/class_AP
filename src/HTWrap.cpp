@@ -1,7 +1,7 @@
 // [[Rcpp::depends(RcppEigen)]]
 
 #include <RcppEigen.h>
-#include "HT.hpp"
+#include "HT.h"
 
 // [[Rcpp::export]]
 Rcpp::List HT_cpp(Eigen::MatrixXd X, Eigen::VectorXd y)

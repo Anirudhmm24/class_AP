@@ -4,7 +4,9 @@
 #include <cstdint>
 #include <numeric>
 #include <vector>
+#ifdef _OPENMP
 #include <omp.h>
+#endif
 
 #include "iboss.h"
 
@@ -282,7 +284,8 @@ void IBOSS(
     const Eigen::Ref<const Eigen::VectorXd>& y,
     Eigen::MatrixXd& X_iboss,
     Eigen::VectorXd& y_iboss,
-    int k)
+    int k,
+    bool intercept)
 {
     const Index p = X.cols();
     const Index N = X.rows();
@@ -313,7 +316,11 @@ void IBOSS(
     nums.reserve(static_cast<std::size_t>(u));
 
     // Reuse thread-local heap buffers across all features.
+#ifdef _OPENMP
     const int max_threads = std::max(1, omp_get_max_threads());
+#else
+    const int max_threads = 1;
+#endif
     std::vector<TopHeap> local_max(static_cast<std::size_t>(max_threads));
     std::vector<BottomHeap> local_min(static_cast<std::size_t>(max_threads));
     for (int t = 0; t < max_threads; ++t) {
@@ -339,11 +346,16 @@ void IBOSS(
 
     #pragma omp parallel shared(current_offset, nums, selected, local_max, local_min, scratch, winners_max, winners_min, phase_r)
     {
+#ifdef _OPENMP
         const int tid = omp_get_thread_num();
+#else
+        const int tid = 0;
+#endif
         TopHeap& max_heap = local_max[static_cast<std::size_t>(tid)];
         BottomHeap& min_heap = local_min[static_cast<std::size_t>(tid)];
 
-        for (int j = 0; j < num_features && current_offset < u; ++j) {
+        int start_j = intercept ? 1 : 0;
+        for (int j = start_j; j < num_features && current_offset < u; ++j) {
             const double* col = X.col(j).data();
 
             // -------------------------

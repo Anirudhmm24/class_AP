@@ -104,8 +104,11 @@
 #' on the selected subdata.
 #'
 #' CLASS uses parallel processing to distribute the repeated LASSO fits
-#' across the available CPU cores.
-#'
+#' across the available CPU cores. On Unix-alike systems, it uses
+#' \code{\link[parallel]{mclapply}} for efficient memory-sharing process
+#' forks. On Windows, it falls back to \code{foreach} and
+#' \code{bigmemory} to manage parallel execution without excessive memory
+#' duplication.
 #' @examples
 #' set.seed(42)
 #' X <- matrix(rnorm(500), nrow = 100, ncol = 5)
@@ -172,58 +175,104 @@ CLASS <- function(X = NULL, y = NULL, csv = NULL, header = FALSE, nSample = -1, 
   if (!is.numeric(X) || !is.numeric(y)) stop("X and y must be numeric.")
 
   p <- ncol(X)
-  N <- nrow(X)
 
   if (nSample > nrow(X)) {
     stop("nSample cannot be larger than number of rows in X")
   }
 
-  X_big <- as.big.matrix(x = X, type = "double", backingfile = "X.bin", descriptorfile = "X.desc")
-  X_desc <- describe(X_big)
-
-  y_big <- as.big.matrix(x = matrix(y, ncol = 1), type = "double", backingfile = "y.bin", descriptorfile = "y.desc")
-  y_desc <- describe(y_big)
-
-  nC <- parallel::detectCores() - 1
-  cl <- makeCluster(nC)
-  registerDoParallel(cl)
+  chk <- Sys.getenv("_R_CHECK_LIMIT_CORES_", "")
+  limit_cores <- nzchar(chk) && tolower(chk) != "false"
+  if (limit_cores) {
+    nC <- 1L
+  } else {
+    user_cores <- getOption("mc.cores", 1L)
+    if (!is.null(user_cores) && is.numeric(user_cores) && user_cores >= 1L) {
+      nC <- as.integer(user_cores)
+    } else {
+      nC <- 1L
+    }
+  }
+  nC <- max(1L, min(nC, as.integer(nTimes)))
 
   accumulator <- function(acc, vec) {
     acc + vec
   }
 
-  # Workaround to multiple attaches per thread
-  # work_distr <- nTimes %/% nC per core and accumulate locally
-  # work_distr[nC] <- work_distr[nC] + (nTimes %% nC) (leftover work for last core)
-
   temp <- nTimes %% nC
-  set.seed(42)
-  freq_count <- foreach(i = 1:nC, .packages = c("bigmemory", "glmnet", "class"), .combine = accumulator) %dopar% {
 
-    X_ref <- attach.big.matrix(X_desc)
-    y_ref <- attach.big.matrix(y_desc)
+  if (.Platform$OS.type == "unix") {
+    freq_count_list <- parallel::mclapply(X = seq_len(nC), FUN = function(i) {
+      local_accumulator <- rep(0, p)
+      work <- if (i <= temp) nTimes %/% nC + 1 else nTimes %/% nC
 
-    local_accumulator <- rep(0, p)
+      for (j in seq_len(work)) {
+        idx <- sample(seq_len(nrow(X)), nSample)
+        X_sub <- X[idx, , drop = FALSE]
+        y_sub <- y[idx]
 
-    work <- if (i <= temp) nTimes %/% nC + 1 else nTimes %/% nC
+        fit <- glmnet::cv.glmnet(x = X_sub, y = y_sub, alpha = 1)
+        coefs <- coef(fit, s = "lambda.min")[-1]
+        local_accumulator <- local_accumulator + as.numeric(coefs != 0)
+      }
+      local_accumulator
+    }, mc.cores = nC)
+    
+    freq_count <- Reduce(accumulator, freq_count_list)
 
-    for (j in 1:work) {
-      idx <- sample(seq_len(nrow(X_ref)), nSample)
-      X_sub <- X_ref[idx, , drop = FALSE]
-      y_sub <- y_ref[idx]
+  } else {
+    uuid <- paste0(sample(letters, 8, replace = TRUE), collapse = "")
+    x_bin <- paste0("X_", uuid, ".bin")
+    x_desc <- paste0("X_", uuid, ".desc")
+    y_bin <- paste0("y_", uuid, ".bin")
+    y_desc <- paste0("y_", uuid, ".desc")
+    tmp_path <- tempdir()
+    tmp_files <- file.path(tmp_path, c(x_bin, x_desc, y_bin, y_desc))
+    on.exit({
+      if (exists("cl", inherits = FALSE) && inherits(cl, "cluster")) {
+        try(parallel::stopCluster(cl), silent = TRUE)
+      }
+      if (exists("X_big", inherits = FALSE)) rm(X_big)
+      if (exists("y_big", inherits = FALSE)) rm(y_big)
+      gc()
+      unlink(tmp_files)
+    }, add = TRUE)
 
-      fit <- glmnet::cv.glmnet(x = X_sub, y = y_sub, alpha = 1)
-      coefs <- coef(fit, s = "lambda.min")[-1]
-      local_accumulator <- local_accumulator + as.numeric(coefs != 0)
+    X_big <- as.big.matrix(x = X, type = "double", backingfile = x_bin, backingpath = tmp_path, descriptorfile = x_desc)
+    X_desc <- describe(X_big)
+
+    y_big <- as.big.matrix(x = matrix(y, ncol = 1), type = "double", backingfile = y_bin, backingpath = tmp_path, descriptorfile = y_desc)
+    y_desc <- describe(y_big)
+
+    cl <- makeCluster(nC)
+    parallel::clusterCall(cl, function(lp) .libPaths(lp), .libPaths())
+    registerDoParallel(cl)
+
+    freq_count <- foreach(i = seq_len(nC), .packages = c("bigmemory", "glmnet", "sublime"), .combine = accumulator) %dopar% {
+      X_ref <- attach.big.matrix(X_desc)
+      y_ref <- attach.big.matrix(y_desc)
+
+      local_accumulator <- rep(0, p)
+      work <- if (i <= temp) nTimes %/% nC + 1 else nTimes %/% nC
+
+      for (j in seq_len(work)) {
+        idx <- sample(seq_len(nrow(X_ref)), nSample)
+        X_sub <- X_ref[idx, , drop = FALSE]
+        y_sub <- y_ref[idx]
+
+        fit <- glmnet::cv.glmnet(x = X_sub, y = y_sub, alpha = 1)
+        coefs <- coef(fit, s = "lambda.min")[-1]
+        local_accumulator <- local_accumulator + as.numeric(coefs != 0)
+      }
+      local_accumulator
     }
 
-    local_accumulator
+    parallel::stopCluster(cl)
+    rm(cl)
+    rm(X_big, y_big)
+    gc()
+    unlink(tmp_files)
   }
 
-  gc() # Should check if this affects runtime
-  stopCluster(cl)
-
-  # Should optimise the below
   kboss_res <- kBOSS(X, y, freq_count, k)
   X_final <- kboss_res$X
   y_final <- kboss_res$y
@@ -245,7 +294,6 @@ CLASS <- function(X = NULL, y = NULL, csv = NULL, header = FALSE, nSample = -1, 
   mse <- mean(residuals^2)
   r_squared <- 1 - sum(residuals^2) / sum((y - mean(y))^2)
 
-  unlink(c("X.bin", "X.desc", "y.bin", "y.desc"))
   return(invisible(list(
     X_f = X_final,
     y_f = y_final,

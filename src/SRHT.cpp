@@ -1,5 +1,4 @@
-#include <iostream>
-#include "SRHT.hpp"
+#include "SRHT.h"
 #include <Eigen/Dense>
 #include <vector>
 #include <cmath>

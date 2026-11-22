@@ -100,15 +100,17 @@
 #' p <- 1 / (1 + exp(-eta))
 #' y <- rbinom(nrow(X), 1, p)
 #'
+#' # Subdata selection with model estimation
 #' fit <- GenIBOSS(
 #'   X = X,
 #'   y = y,
 #'   nSample = 50,
 #'   k = 80,
-#'   family = binomial()
+#'   family = binomial(),
+#'   add_logs = TRUE
 #' )
 #'
-#' coef(fit)
+#' coef(fit$final_model)
 GenIBOSS <- function(X = NULL, y = NULL, csv = NULL, nSample=-1, k=-1, family, intercept = FALSE, header = FALSE, add_logs = FALSE) {
   if (identical(nSample, -1) || identical(nSample, -1L)) {
     stop("Check input GenIBOSS(..., nSample = (pos int), ...")
@@ -177,7 +179,8 @@ GenIBOSS <- function(X = NULL, y = NULL, csv = NULL, nSample=-1, k=-1, family, i
   if (intercept) X_sub = cbind(1, X_sub)
   coef_vector <- unname(fastglmPure(X_sub, y_sub, family = family)$coefficients)
 
-  eta <- as.numeric(X %*% coef_vector)
+  X_design <- if (intercept) cbind(1, X) else X
+  eta <- as.numeric(X_design %*% coef_vector)
   mu <- family$linkinv(eta)
 
   # derivative
@@ -185,7 +188,7 @@ GenIBOSS <- function(X = NULL, y = NULL, csv = NULL, nSample=-1, k=-1, family, i
   var_val <- family$variance(mu)
 
   # stddev
-  sd_y <- sqrt(family$variance(mu))
+  sd_y <- sqrt(var_val)
   wt <- abs(mu_eta)/sd_y
   Z <- X * wt
 

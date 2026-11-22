@@ -106,15 +106,17 @@ eta <- X \%*\% beta
 p <- 1 / (1 + exp(-eta))
 y <- rbinom(nrow(X), 1, p)
 
+# Subdata selection with model estimation
 fit <- GenIBOSS(
   X = X,
   y = y,
   nSample = 50,
   k = 80,
-  family = binomial()
+  family = binomial(),
+  add_logs = TRUE
 )
 
-coef(fit)
+coef(fit$final_model)
 }
 \references{
 Yu, J., Liu, J., and Wang, H.

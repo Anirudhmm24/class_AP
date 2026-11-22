@@ -17,7 +17,15 @@ class_warmup_frequency <- function(X, y, nSample, min_iter = 3L, seed = NULL) {
     stop("min_iter must be a non-negative integer.")
   }
 
-  if (!is.null(seed)) set.seed(seed)
+  if (!is.null(seed)) {
+    if (exists(".Random.seed", envir = .GlobalEnv, inherits = FALSE)) {
+      old_seed <- get(".Random.seed", envir = .GlobalEnv, inherits = FALSE)
+      on.exit(assign(".Random.seed", old_seed, envir = .GlobalEnv), add = TRUE)
+    } else {
+      on.exit(rm(".Random.seed", envir = .GlobalEnv), add = TRUE)
+    }
+    set.seed(seed)
+  }
 
   p <- ncol(X)
   cumulative_frequency <- numeric(p)
@@ -158,7 +166,7 @@ class_active_set_stability <- function(
     tolerance = tolerance,
     max_iter = max_iter
   )
-  checkpoint_indices <- seq(min_iter, ncol(pi_hat), by = check_every)
+  checkpoint_indices <- as.integer(seq(min_iter, ncol(pi_hat), by = check_every))
   jaccard <- rep(NA_real_, ncol(pi_hat))
   consecutive_successes <- 0L
   stable <- FALSE
@@ -347,7 +355,7 @@ class_patience_rule <- function(
     active_sets = active_sets,
     confidence = confidence
   )
-  checkpoint_indices <- seq(min_iter, iterations, by = check_every)
+  checkpoint_indices <- as.integer(seq(min_iter, iterations, by = check_every))
   jaccard <- rep(NA_real_, iterations)
   frequency_change <- rep(NA_real_, iterations)
   successful <- rep(FALSE, iterations)
@@ -454,7 +462,15 @@ class_early_exit <- function(
     stop("frequency_tolerance must be NULL or a non-negative number.")
   }
 
-  if (!is.null(seed)) set.seed(seed)
+  if (!is.null(seed)) {
+    if (exists(".Random.seed", envir = .GlobalEnv, inherits = FALSE)) {
+      old_seed <- get(".Random.seed", envir = .GlobalEnv, inherits = FALSE)
+      on.exit(assign(".Random.seed", old_seed, envir = .GlobalEnv), add = TRUE)
+    } else {
+      on.exit(rm(".Random.seed", envir = .GlobalEnv), add = TRUE)
+    }
+    set.seed(seed)
+  }
 
   feature_count <- ncol(X)
   cumulative_frequency <- numeric(feature_count)
