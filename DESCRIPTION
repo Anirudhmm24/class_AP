@@ -1,5 +1,5 @@
 Package: sublime
-Title: Subdata Selection for Large-Scale Linear Regression
+Title: Subdata Selection and Randomized Sketching for Regression
 Version: 0.1.0
 Authors@R: c(
     person("Aditi", "Vaidya",       email = "aditiv2004@googlemail.com", role = c("aut", "cre")),
@@ -35,7 +35,8 @@ Imports:
     glmnet,
     bigmemory,
     doParallel,
-    foreach
+    foreach,
+    parallel
 Suggests: 
     testthat (>= 3.0.0),
     knitr,

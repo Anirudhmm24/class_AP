@@ -13,12 +13,12 @@ kmeans2 <- function(freq_count) {
     .Call(`_sublime_kmeans2`, freq_count)
 }
 
-SRHT_cpp <- function(X, y, r) {
-    .Call(`_sublime_SRHT_cpp`, X, y, r)
+SRHT_cpp <- function(X, y, r, seed = NULL) {
+    .Call(`_sublime_SRHT_cpp`, X, y, r, seed)
 }
 
-geniboss_cpp <- function(A, X, y, r) {
-    .Call(`_sublime_geniboss_cpp`, A, X, y, r)
+geniboss_cpp <- function(X, y, wt, r) {
+    .Call(`_sublime_geniboss_cpp`, X, y, wt, r)
 }
 
 iboss_cpp <- function(X, y, k, intercept, add_logs) {

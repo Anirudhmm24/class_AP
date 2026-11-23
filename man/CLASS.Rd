@@ -11,7 +11,8 @@ CLASS(
   header = FALSE,
   nSample = -1,
   nTimes = -1,
-  k = -1
+  k = -1,
+  seed = NULL
 )
 }
 \arguments{
@@ -43,6 +44,9 @@ across the available CPU cores.}
 
 \item{k}{Positive integer specifying the number of observations to
 select in the final subselection performed by IBOSS.}
+
+\item{seed}{Optional integer specifying the random seed for reproducible
+subsampling and cluster execution. Defaults to \code{NULL}.}
 }
 \value{
 A list containing the following components:

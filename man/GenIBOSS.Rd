@@ -55,7 +55,8 @@ subdata predictors.
 \item \code{y_selected}: Numeric vector containing the selected
 responses.
 \item \code{final_model}: Fitted generalized linear model of class
-\code{"fastglm"} fitted on the selected subdata.
+\code{"fastglm"} fitted on the selected subdata. Included only when
+\code{add_logs = TRUE}.
 }
 }
 \description{

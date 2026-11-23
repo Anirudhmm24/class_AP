@@ -80,7 +80,8 @@
 #'   \item \code{y_selected}: Numeric vector containing the selected
 #'   responses.
 #'   \item \code{final_model}: Fitted generalized linear model of class
-#'   `"fastglm"` fitted on the selected subdata.
+#'   `"fastglm"` fitted on the selected subdata. Included only when
+#'   `add_logs = TRUE`.
 #' }
 #'
 #' @export
@@ -189,10 +190,9 @@ GenIBOSS <- function(X = NULL, y = NULL, csv = NULL, nSample=-1, k=-1, family, i
 
   # stddev
   sd_y <- sqrt(var_val)
-  wt <- abs(mu_eta)/sd_y
-  Z <- X * wt
+  wt <- abs(mu_eta) / sd_y
 
-  res <- geniboss_cpp(Z, X, y, as.integer(k))
+  res <- geniboss_cpp(X, y, wt, as.integer(k))
   if (add_logs) {
     if (intercept) res$X_selected = cbind(1, res$X_selected)
     final_model <- fastglm(res$X_selected, res$y_selected, family = family)

@@ -49,29 +49,30 @@ BEGIN_RCPP
 END_RCPP
 }
 // SRHT_cpp
-Rcpp::List SRHT_cpp(Eigen::MatrixXd X, Eigen::VectorXd y, int r);
-RcppExport SEXP _sublime_SRHT_cpp(SEXP XSEXP, SEXP ySEXP, SEXP rSEXP) {
+Rcpp::List SRHT_cpp(Eigen::MatrixXd X, Eigen::VectorXd y, int r, Rcpp::Nullable<int> seed);
+RcppExport SEXP _sublime_SRHT_cpp(SEXP XSEXP, SEXP ySEXP, SEXP rSEXP, SEXP seedSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< Eigen::MatrixXd >::type X(XSEXP);
     Rcpp::traits::input_parameter< Eigen::VectorXd >::type y(ySEXP);
     Rcpp::traits::input_parameter< int >::type r(rSEXP);
-    rcpp_result_gen = Rcpp::wrap(SRHT_cpp(X, y, r));
+    Rcpp::traits::input_parameter< Rcpp::Nullable<int> >::type seed(seedSEXP);
+    rcpp_result_gen = Rcpp::wrap(SRHT_cpp(X, y, r, seed));
     return rcpp_result_gen;
 END_RCPP
 }
 // geniboss_cpp
-Rcpp::List geniboss_cpp(const Eigen::MatrixXd& A, const Eigen::MatrixXd& X, const Eigen::VectorXd& y, int r);
-RcppExport SEXP _sublime_geniboss_cpp(SEXP ASEXP, SEXP XSEXP, SEXP ySEXP, SEXP rSEXP) {
+Rcpp::List geniboss_cpp(const Eigen::MatrixXd& X, const Eigen::VectorXd& y, const Eigen::VectorXd& wt, int r);
+RcppExport SEXP _sublime_geniboss_cpp(SEXP XSEXP, SEXP ySEXP, SEXP wtSEXP, SEXP rSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const Eigen::MatrixXd& >::type A(ASEXP);
     Rcpp::traits::input_parameter< const Eigen::MatrixXd& >::type X(XSEXP);
     Rcpp::traits::input_parameter< const Eigen::VectorXd& >::type y(ySEXP);
+    Rcpp::traits::input_parameter< const Eigen::VectorXd& >::type wt(wtSEXP);
     Rcpp::traits::input_parameter< int >::type r(rSEXP);
-    rcpp_result_gen = Rcpp::wrap(geniboss_cpp(A, X, y, r));
+    rcpp_result_gen = Rcpp::wrap(geniboss_cpp(X, y, wt, r));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -95,7 +96,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_sublime_HT_cpp", (DL_FUNC) &_sublime_HT_cpp, 2},
     {"_sublime_kBOSS", (DL_FUNC) &_sublime_kBOSS, 4},
     {"_sublime_kmeans2", (DL_FUNC) &_sublime_kmeans2, 1},
-    {"_sublime_SRHT_cpp", (DL_FUNC) &_sublime_SRHT_cpp, 3},
+    {"_sublime_SRHT_cpp", (DL_FUNC) &_sublime_SRHT_cpp, 4},
     {"_sublime_geniboss_cpp", (DL_FUNC) &_sublime_geniboss_cpp, 4},
     {"_sublime_iboss_cpp", (DL_FUNC) &_sublime_iboss_cpp, 5},
     {NULL, NULL, 0}

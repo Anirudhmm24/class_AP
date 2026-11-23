@@ -22,6 +22,8 @@
 #'   is an intercept column of ones and prepends one when necessary. Defaults
 #'   to `FALSE`.
 #' @param header Logical; whether the CSV file contains a header row.
+#' @param seed Optional integer for reproducible random signs and sampling.
+#'   Defaults to `NULL` for natural hardware randomization.
 #'
 #' @return A list with the following components:
 #' \itemize{
@@ -69,7 +71,7 @@
 #' @import Rcpp
 #' @importFrom data.table fread
 #' @export
-SRHT <- function(X = NULL, y = NULL, csv = NULL, k, intercept = FALSE, header = FALSE) {
+SRHT <- function(X = NULL, y = NULL, csv = NULL, k, intercept = FALSE, header = FALSE, seed = NULL) {
 
   if (!is.null(csv)) {
     if (!file.exists(csv)) stop("CSV file doesn't exist at given path.")
@@ -92,8 +94,16 @@ SRHT <- function(X = NULL, y = NULL, csv = NULL, k, intercept = FALSE, header = 
   if (ncol(X) < 1L) stop("X must have at least one predictor column.")
   if (any(!is.finite(X)) || any(!is.finite(y))) stop("X and y must contain only finite numeric values.")
 
-  if (missing(k) || !is.numeric(k) || length(k) != 1L || is.na(k) || !is.finite(k) || k <= 0 || k != as.integer(k)) {
-    stop("k must be a positive finite integer.")
+  if (missing(k) || !is.numeric(k) || length(k) != 1L || is.na(k) || !is.finite(k) || k < 0 || k != as.integer(k)) {
+    stop("k must be a non-negative finite integer.")
+  }
+
+  if (k == 0) {
+    p_cols <- if (intercept && !all(abs(X[, 1] - 1) < 1e-9)) ncol(X) + 1L else ncol(X)
+    return(list(
+      X_f = matrix(numeric(0), nrow = 0, ncol = p_cols),
+      y_f = numeric(0)
+    ))
   }
 
   if (intercept) {
@@ -103,9 +113,16 @@ SRHT <- function(X = NULL, y = NULL, csv = NULL, k, intercept = FALSE, header = 
     }
   }
 
+  if (!is.null(seed)) {
+    if (!is.numeric(seed) || length(seed) != 1L || is.na(seed) || !is.finite(seed)) {
+      stop("seed must be a single finite integer or NULL.")
+    }
+    seed <- as.integer(seed)
+  }
+
   storage.mode(X) <- "double"
   storage.mode(y) <- "double"
 
-  res <- suppressWarnings(SRHT_cpp(X, y, as.integer(k)))
+  res <- suppressWarnings(SRHT_cpp(X, y, as.integer(k), seed))
   return(res)
 }

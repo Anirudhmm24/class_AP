@@ -18,7 +18,9 @@ Rcpp::List kBOSS(Eigen::MatrixXd& X, Eigen::VectorXd& y, Rcpp::NumericVector fre
 	std::vector<int> active_vars = KMeans2(freq_count);
 
 	Eigen::MatrixXd X_reduced(X.rows(), active_vars.size());
+#ifdef _OPENMP
 	#pragma omp parallel for
+#endif
 	for(size_t i = 0; i < active_vars.size(); i++) {
 		X_reduced.col(i) = X.col(active_vars[i]);
 	}

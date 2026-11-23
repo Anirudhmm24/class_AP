@@ -4,7 +4,15 @@
 \alias{SRHT}
 \title{Subsampled Randomized Hadamard Transform (SRHT)}
 \usage{
-SRHT(X = NULL, y = NULL, csv = NULL, k, intercept = FALSE, header = FALSE)
+SRHT(
+  X = NULL,
+  y = NULL,
+  csv = NULL,
+  k,
+  intercept = FALSE,
+  header = FALSE,
+  seed = NULL
+)
 }
 \arguments{
 \item{X}{A numeric matrix of predictors. Required if \code{csv} is NULL.
@@ -26,6 +34,9 @@ is an intercept column of ones and prepends one when necessary. Defaults
 to \code{FALSE}.}
 
 \item{header}{Logical; whether the CSV file contains a header row.}
+
+\item{seed}{Optional integer for reproducible random signs and sampling.
+Defaults to \code{NULL} for natural hardware randomization.}
 }
 \value{
 A list with the following components:

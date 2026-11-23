@@ -11,3 +11,5 @@
 ^\.gitignore$
 ^\.Rhistory$
 ^sublime_.*\.tar\.gz$
+^.*\.bin$
+^.*\.desc$

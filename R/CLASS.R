@@ -39,6 +39,9 @@
 #' @param k Positive integer specifying the number of observations to
 #'   select in the final subselection performed by IBOSS.
 #'
+#' @param seed Optional integer specifying the random seed for reproducible
+#'   subsampling and cluster execution. Defaults to `NULL`.
+#'
 #' @return A list containing the following components:
 #' \itemize{
 #'   \item \code{X_f}: Numeric matrix containing the predictor values
@@ -146,7 +149,15 @@
 #' @import bigmemory
 #' @import parallel
 
-CLASS <- function(X = NULL, y = NULL, csv = NULL, header = FALSE, nSample = -1, nTimes = -1, k = -1) {
+CLASS <- function(X = NULL, y = NULL, csv = NULL, header = FALSE, nSample = -1, nTimes = -1, k = -1, seed = NULL) {
+  if (!is.null(seed)) {
+    if (!is.numeric(seed) || length(seed) != 1L || is.na(seed) || !is.finite(seed)) {
+      stop("seed must be a single finite integer or NULL.")
+    }
+    seed <- as.integer(seed)
+    set.seed(seed)
+  }
+
   if (nSample == -1) {
     stop("Check input CLASS(..., nSample = (pos int), ...")
   }
@@ -175,6 +186,22 @@ CLASS <- function(X = NULL, y = NULL, csv = NULL, header = FALSE, nSample = -1, 
   if (!is.numeric(X) || !is.numeric(y)) stop("X and y must be numeric.")
 
   p <- ncol(X)
+
+  tss <- sum((y - mean(y))^2)
+  if (tss == 0 || all(y == y[1])) {
+    intercept_hat <- mean(y)
+    final_beta <- rep(0, p)
+    return(invisible(list(
+      X_f = matrix(numeric(0), nrow = 0, ncol = 0),
+      y_f = numeric(0),
+      intercept_hat = intercept_hat,
+      beta_final = final_beta,
+      selected_indices = integer(0),
+      feature_counts = rep(0, p),
+      mse = 0,
+      r_squared = 0
+    )))
+  }
 
   if (nSample > nrow(X)) {
     stop("nSample cannot be larger than number of rows in X")
@@ -244,6 +271,9 @@ CLASS <- function(X = NULL, y = NULL, csv = NULL, header = FALSE, nSample = -1, 
     y_desc <- describe(y_big)
 
     cl <- makeCluster(nC)
+    if (!is.null(seed)) {
+      parallel::clusterSetRNGStream(cl, iseed = as.integer(seed))
+    }
     parallel::clusterCall(cl, function(lp) .libPaths(lp), .libPaths())
     registerDoParallel(cl)
 
@@ -278,9 +308,31 @@ CLASS <- function(X = NULL, y = NULL, csv = NULL, header = FALSE, nSample = -1, 
   y_final <- kboss_res$y
   active_vars <- kboss_res$selected_vars
 
+  if (length(active_vars) == 0) {
+    intercept_hat <- mean(y)
+    final_beta <- rep(0, p)
+    y_pred <- rep(intercept_hat, nrow(X))
+    residuals <- y - y_pred
+    mse <- mean(residuals^2)
+    r_squared <- 0
+
+    return(invisible(list(
+      X_f = X_final,
+      y_f = y_final,
+      intercept_hat = intercept_hat,
+      beta_final = final_beta,
+      selected_indices = integer(0),
+      feature_counts = freq_count,
+      mse = mse,
+      r_squared = r_squared
+    )))
+  }
+
   intercept_col <- rep(x = 1, times = nrow(X_final))
   X_ols <- cbind(intercept_col, X_final)
-  beta_hat <- qr.solve(X_ols, y_final)
+  fit_ols <- stats::lm.fit(X_ols, y_final)
+  beta_hat <- fit_ols$coefficients
+  beta_hat[is.na(beta_hat)] <- 0
 
   intercept_hat <- beta_hat[1]
   beta_reduced  <- beta_hat[-1]
@@ -292,7 +344,9 @@ CLASS <- function(X = NULL, y = NULL, csv = NULL, header = FALSE, nSample = -1, 
   residuals <- y - y_pred
 
   mse <- mean(residuals^2)
-  r_squared <- 1 - sum(residuals^2) / sum((y - mean(y))^2)
+  tss <- sum((y - mean(y))^2)
+  rss <- sum(residuals^2)
+  r_squared <- if (tss == 0) 0 else 1 - rss / tss
 
   return(invisible(list(
     X_f = X_final,
