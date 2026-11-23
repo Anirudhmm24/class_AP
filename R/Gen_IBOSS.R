@@ -192,7 +192,7 @@ GenIBOSS <- function(X = NULL, y = NULL, csv = NULL, nSample=-1, k=-1, family, i
   if (!isTRUE(pilot$converged) || length(coef_vector) != ncol(X_sub) || any(!is.finite(coef_vector)))
     stop("Pilot fit failed to converge to finite coefficients.")
   X_design <- if (add_intercept) cbind(1, X) else X
-  eta <- as.numeric(X %*% coef_vector)
+  eta <- as.numeric(X_design %*% coef_vector)
   mu <- family$linkinv(eta)
 
   # derivative
@@ -205,7 +205,7 @@ GenIBOSS <- function(X = NULL, y = NULL, csv = NULL, nSample=-1, k=-1, family, i
   wt <- abs(mu_eta) / sd_y
   if (length(wt) != nrow(X) || any(!is.finite(wt))) stop("Pilot produced invalid weights.")
 
-  res <- geniboss_cpp(X_design, y, wt, as.integer(k))
+  res <- geniboss_cpp(X, y, wt, as.integer(k))
   if (add_logs) {
     if (add_intercept) res$X_selected = cbind(1, res$X_selected)
     final_model <- fastglm(res$X_selected, res$y_selected, family = family)
