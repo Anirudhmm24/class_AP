@@ -29,8 +29,8 @@ Windows 11 x64, R 4.5.2, Rtools45 / GCC 14.3.0.
 * Final routine suite: 502 passing assertions, zero failures and errors.
   Two small-fold glmnet warnings come from the unchanged early-exit test.
 * Routine research/benchmark tests remain opt-in or skipped on CRAN.
-  The early-exit algorithm and its synthetic benchmark were intentionally not
-  changed; the known early-exit findings in the supplied audit remain open.
+  Early-exit bookkeeping (completed iteration tracking, selection count and probability column alignment)
+  and fitted intercept return have been hardened and verified with regression tests.
 
 Logs and test results are retained locally under `verification/` (excluded
 from the source archive and Git). Final archive/check: `final-release/sublime_0.1.0.tar.gz` and

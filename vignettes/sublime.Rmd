@@ -18,7 +18,7 @@ knitr::opts_chunk$set(
 
 ## Introduction
 
-'sublime` implements some sub-data selection and randomized
+`sublime` implements some sub-data selection and randomized
 sketching methods for speeding up linear regression, feature selection and 
 generalized linear models on large datasets. Rather than fitting a 
 model on all $N$ observations, each method constructs a
@@ -112,6 +112,27 @@ the selected subdata and returns it as `final_model`; with
 
 Any standard `family` object works, as long as it defines `linkinv`,
 `mu.eta`, and `variance` — e.g. `gaussian()`, `binomial()`, `poisson()`.
+
+## HT: Randomized Walsh-Hadamard Transform
+
+`HT()` applies a randomized Walsh-Hadamard transform to the predictors `X`
+and response `y`. It pads the data rows up to the next power of two,
+multiplies each observation by an independent random sign $\pm 1$, and applies
+the Fast Walsh-Hadamard Transform (FWHT). This preconditioning step equalizes
+leverage scores across observations.
+
+```{r}
+set.seed(42)
+n <- 1000
+p <- 4
+
+X <- matrix(rnorm(n * p), ncol = p)
+y <- as.numeric(X %*% c(1.5, -2, 0.5, 1) + rnorm(n))
+
+ht_res <- HT(X = X, y = y, seed = 42)
+dim(ht_res$X_f)
+length(ht_res$y_f)
+```
 
 ## SRHT: Subsampled Randomized Hadamard Transform
 

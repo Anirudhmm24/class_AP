@@ -106,3 +106,32 @@ test_that("public CLASS variants return mean-response fits for an empty active s
     expect_equal(out$r_squared,0)
   }
 })
+
+test_that("early exit handles failed fits without corrupting history and returns intercept", {
+  set.seed(42)
+  X <- matrix(rnorm(80 * 4), nrow = 80, ncol = 4)
+  y <- 3 + 2 * X[, 1] + rnorm(80)
+
+  orig_cv <- glmnet::cv.glmnet
+  calls <- 0L
+  out <- testthat::with_mocked_bindings(
+    sublime:::class_early_exit(
+      X = X, y = y, nSample = 35, min_iter = 2, check_every = 1,
+      patience = 2, max_iter = 5, max_fit_failures = 3, seed = 123
+    ),
+    cv.glmnet = function(...) {
+      calls <<- calls + 1L
+      if (calls == 2L) stop("Simulated LASSO failure")
+      orig_cv(...)
+    },
+    .package = "glmnet"
+  )
+
+  expect_equal(out$fit_failures, 1L)
+  expect_true(out$iterations_used >= 2L)
+  expect_equal(ncol(out$selection_counts), out$iterations_used)
+  expect_equal(ncol(out$pi_hat), out$iterations_used)
+  expect_true(all(out$selection_counts[, 1] <= 1))
+  expect_true(is.numeric(out$intercept) && is.finite(out$intercept))
+  expect_true(is.numeric(out$intercept_hat) && is.finite(out$intercept_hat))
+})

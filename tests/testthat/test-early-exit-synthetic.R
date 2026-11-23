@@ -58,7 +58,7 @@ fit_selected_coefficients <- function(X, y, selected_indices) {
   coefficients
 }
 
-classification_metrics <- function(selected, truth, reference) {
+classification_metrics <- function(selected, truth, reference, p = 500L) {
   selected <- sort(unique(selected))
   truth <- sort(unique(truth))
   reference <- sort(unique(reference))
@@ -67,7 +67,7 @@ classification_metrics <- function(selected, truth, reference) {
   fn <- length(setdiff(truth, selected))
   list(
     exact_active_set_recovery = identical(selected, truth),
-    false_positive_rate = fp / max(1, length(setdiff(seq_len(max(c(selected, truth, reference))), truth))),
+    false_positive_rate = fp / max(1, p - length(truth)),
     false_negative_rate = fn / max(1, length(truth)),
     jaccard_to_reference = sublime:::class_jaccard(selected, reference)
   )
@@ -121,10 +121,11 @@ test_that("CLEAR runs on synthetic multivariate normal data and writes a compari
       seed = 5000 + replication
     )
 
-    clear_prediction <- cbind(1, test$X) %*% c(0, clear$coefficients)
+    clear_intercept <- if (!is.null(clear$intercept) && is.finite(clear$intercept)) clear$intercept else 0
+    clear_prediction <- cbind(1, test$X) %*% c(clear_intercept, clear$coefficients)
     clear_residual <- test$y - clear_prediction
     metrics <- classification_metrics(
-      clear$selected_indices, train$active, reference$selected_indices
+      clear$selected_indices, train$active, reference$selected_indices, p = p
     )
     rows[[replication]] <- data.frame(
       replication = replication,

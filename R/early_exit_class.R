@@ -519,25 +519,25 @@ class_early_exit <- function(
     }
     selected <- as.numeric(coefficients != 0)
     cumulative_frequency <- cumulative_frequency + selected
-    selection_counts[, iteration] <- cumulative_frequency
-    pi_hat[, iteration] <- cumulative_frequency / iteration
     completed_iterations <- completed_iterations + 1L
+    selection_counts[, completed_iterations] <- cumulative_frequency
+    pi_hat[, completed_iterations] <- cumulative_frequency / completed_iterations
 
-    is_checkpoint <- iteration >= min_iter &&
-      (iteration - min_iter) %% check_every == 0L
+    is_checkpoint <- completed_iterations >= min_iter &&
+      (completed_iterations - min_iter) %% check_every == 0L
     if (!is_checkpoint) next
 
     current_active_set <- class_active_set(
-      pi_hat[, iteration],
+      pi_hat[, completed_iterations],
       tolerance = active_set_tolerance,
       max_iter = active_set_max_iter
     )
     cluster_details <- class_active_set_details(
-      pi_hat[, iteration],
+      pi_hat[, completed_iterations],
       tolerance = active_set_tolerance,
       max_iter = active_set_max_iter
     )
-    if (length(unique(pi_hat[, iteration])) == 1L) {
+    if (length(unique(pi_hat[, completed_iterations])) == 1L) {
       failure_reason <- "identical_selection_frequencies"
       break
     }
@@ -551,8 +551,8 @@ class_early_exit <- function(
     }
     final_centers <- cluster_details$centers
     current_gap <- class_uncertainty_separation(
-      selection_counts[, iteration, drop = FALSE],
-      trials = iteration,
+      selection_counts[, completed_iterations, drop = FALSE],
+      trials = completed_iterations,
       active_sets = list(current_active_set),
       confidence = confidence
     )$gap[1L]
@@ -568,7 +568,7 @@ class_early_exit <- function(
         previous_active_set,
         current_active_set
       )
-      current_frequency_change <- max(abs(pi_hat[, iteration] - previous_pi))
+      current_frequency_change <- max(abs(pi_hat[, completed_iterations] - previous_pi))
       frequency_ok <- is.null(frequency_tolerance) ||
         current_frequency_change <= frequency_tolerance
       successful <- current_jaccard >= jaccard_tol &&
@@ -582,7 +582,7 @@ class_early_exit <- function(
     }
 
     checkpoint_results[[length(checkpoint_results) + 1L]] <- data.frame(
-      iteration = iteration,
+      iteration = completed_iterations,
       jaccard = current_jaccard,
       gap = current_gap,
       frequency_change = current_frequency_change,
@@ -591,19 +591,17 @@ class_early_exit <- function(
     )
     active_set_history[[length(active_set_history) + 1L]] <- current_active_set
     previous_active_set <- current_active_set
-    previous_pi <- pi_hat[, iteration]
+    previous_pi <- pi_hat[, completed_iterations]
 
     if (consecutive_successes >= patience) {
       stopped_early <- TRUE
-      stop_at <- iteration
+      stop_at <- completed_iterations
       break
     }
   }
 
-  iterations_run <- if (stopped_early) stop_at else {
-    completed_iterations
-  }
-  if (is.null(failure_reason) && !stopped_early && iterations_run >= max_iter) {
+  iterations_run <- if (stopped_early) stop_at else completed_iterations
+  if (is.null(failure_reason) && !stopped_early && iteration >= max_iter) {
     failure_reason <- "max_iter_reached_without_convergence"
   }
   checkpoints <- if (length(checkpoint_results) == 0L) {
@@ -621,6 +619,7 @@ class_early_exit <- function(
 
   active_set <- if (is.null(previous_active_set)) integer() else previous_active_set
   final_coefficients <- numeric(feature_count)
+  intercept_hat <- NA_real_
   regression_failed <- FALSE
   if (length(active_set) > 0L && iterations_run > 0L) {
     design <- cbind(1, X[, active_set, drop = FALSE])
@@ -629,7 +628,8 @@ class_early_exit <- function(
       any(!is.finite(regression$coefficients)) ||
       regression$rank < ncol(design)
     if (!regression_failed) {
-      final_coefficients[active_set] <- regression$coefficients[-1L]
+      intercept_hat <- unname(regression$coefficients[1L])
+      final_coefficients[active_set] <- unname(regression$coefficients[-1L])
     }
   } else if (is.null(failure_reason)) {
     regression_failed <- TRUE
@@ -669,6 +669,8 @@ class_early_exit <- function(
     selection_counts = if (iterations_run > 0L) {
       selection_counts[, seq_len(iterations_run), drop = FALSE]
     } else matrix(numeric(), nrow = feature_count, ncol = 0),
+    intercept = intercept_hat,
+    intercept_hat = intercept_hat,
     coefficients = final_coefficients,
     fit_failures = fit_failures
   )
