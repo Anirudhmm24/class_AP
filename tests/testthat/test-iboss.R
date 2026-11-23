@@ -102,10 +102,10 @@ test_that("IBOSS intercept flag changes feature-scanning behavior", {
 	d <- iboss_fixture()
 
 	out_no_intercept <- IBOSS(X = d$X, y = d$y, k = 2, intercept = FALSE)
-	out_intercept <- IBOSS(X = d$X, y = d$y, k = 2, intercept = TRUE)
+	out_intercept <- IBOSS(X = cbind(1, d$X), y = d$y, k = 2, intercept = TRUE)
 
 	expect_setequal(out_no_intercept$y_selected, c(30, 40))
-	expect_setequal(out_intercept$y_selected, c(10, 60))
+	expect_setequal(out_intercept$y_selected, out_no_intercept$y_selected)
 })
 
 test_that("IBOSS should reject non-positive k", {

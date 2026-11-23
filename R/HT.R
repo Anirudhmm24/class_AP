@@ -18,6 +18,10 @@
 #' @param header Boolean variable. Indicates if the CSV file contains a header row.
 #'   Passed directly to \code{data.table::fread}. Defaults to \code{FALSE}.
 #'
+#' @param seed Optional non-negative integer seed. NULL uses native entropy,
+#'   which is not controlled by set.seed().
+#' @details The transform uses random signs and the unnormalized Hadamard
+#' matrix, with zero padding to the next power of two.
 #' @return A list containing:
 #' \itemize{
 #'   \item \code{X_f}: Padded and Hadamard-transformed predictor matrix.
@@ -29,7 +33,7 @@
 #' X <- matrix(rnorm(100), nrow = 20, ncol = 5)
 #' y <- rnorm(20)
 #'
-#' res <- HT(X = X, y = y)
+#' res <- HT(X = X, y = y, seed = 42)
 #' dim(res$X_f)
 #' length(res$y_f)
 #'
@@ -37,28 +41,12 @@
 #' @import Rcpp
 #' @importFrom data.table fread
 #' @export
-HT <- function(X = NULL, y = NULL, csv = NULL, intercept = FALSE, header = FALSE) {
+HT <- function(X = NULL, y = NULL, csv = NULL, intercept = FALSE, header = FALSE, seed = NULL) {
 
-  if (!is.null(csv)) {
-    if (!file.exists(csv)) stop("CSV file doesn't exist at given path.")
-    if (!is.null(X) || !is.null(y)) stop("Provide either csv OR {X, y}, not both.")
-
-    dat <- data.table::fread(csv, header = header)
-    dat <- as.matrix(dat)
-
-    X <- dat[, -ncol(dat), drop = FALSE]
-    y <- dat[,  ncol(dat)]
-  }
-  else {
-    if (is.null(X) || is.null(y)) stop("Provide either csv OR {X, y}.")
-    if (!is.matrix(X)) X <- as.matrix(X)
-  }
-
-  if (nrow(X) != length(y)) stop("X and y must have same number of rows.")
-  if (!is.numeric(X) || !is.numeric(y)) stop("X and y must be numeric.")
-  if (nrow(X) < 1L) stop("X must have at least one row.")
-  if (ncol(X) < 1L) stop("X must have at least one predictor column.")
-  if (any(!is.finite(X)) || any(!is.finite(y))) stop("X and y must contain only finite numeric values.")
+  .sublime_flag(intercept, "intercept")
+  seed <- .sublime_seed(seed)
+  data <- .sublime_data(X, y, csv, header)
+  X <- data$X; y <- data$y
 
   if (intercept) {
     first_col_is_ones <- all(abs(X[,1] - 1) < 1e-9)
@@ -70,6 +58,6 @@ HT <- function(X = NULL, y = NULL, csv = NULL, intercept = FALSE, header = FALSE
   storage.mode(X) <- "double"
   storage.mode(y) <- "double"
 
-  res <- suppressWarnings(HT_cpp(X, y))
+  res <- HT_cpp(X, y, seed)
   return(res)
 }

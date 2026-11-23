@@ -25,7 +25,7 @@ Must have the same number of rows as \code{y}.}
 of the CSV is the response variable \code{y} and all preceding columns
 are predictors \code{X}.}
 
-\item{k}{Positive integer specifying the number of transformed rows to
+\item{k}{Non-negative integer specifying the number of transformed rows to
 return. The current implementation samples transformed row indices with
 replacement, so duplicate rows may occur in the result.}
 
@@ -36,7 +36,7 @@ to \code{FALSE}.}
 \item{header}{Logical; whether the CSV file contains a header row.}
 
 \item{seed}{Optional integer for reproducible random signs and sampling.
-Defaults to \code{NULL} for natural hardware randomization.}
+Defaults to \code{NULL} for native entropy independent of R's RNG.}
 }
 \value{
 A list with the following components:
@@ -68,24 +68,23 @@ corresponding rows of \eqn{\widetilde{X}} and \eqn{\widetilde{y}}. The common SR
 scaling factor is omitted because it cancels when the sketched data are
 used in the subsequent least-squares calculation.
 
-Because the sign vector and sampled indices are random, repeated calls with
-the same inputs can return different subdata. The current R wrapper does not
-expose a seed argument; reproducibility therefore requires controlling the
-random state in the underlying implementation or adding an explicit seed to
-the C++ interface.
+Supply seed for reproducible native signs and row sampling. With seed = NULL,
+native entropy is used; set.seed() alone does not control this randomness.
 }
 \examples{
 set.seed(42)
 X <- matrix(rnorm(400), nrow = 100, ncol = 4)
 y <- rnorm(100)
 
-sketched <- SRHT(X = X, y = y, k = 20)
+sketched <- SRHT(X = X, y = y, k = 20, seed = 42)
 dim(sketched$X_f)
 length(sketched$y_f)
 
 }
 \references{
-Tropp, J. A., Yurtsever, A. C., Udell, M. A., Volgushev, S. and
+The following reference discusses randomized sketching; this implementation
+uses an unnormalized Hadamard transform and samples with replacement.
+Tropp, J. A., Yurtsever, A., Udell, M. and
 Cevher, V. (2017). Practical sketching algorithms for low-rank matrix
 approximation. \emph{SIAM Journal on Matrix Analysis and Applications},
 38(4), 1454--1485.

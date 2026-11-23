@@ -1,3 +1,4 @@
+#include "sublime_control.h"
 // [[Rcpp::depends(RcppEigen)]]
 
 #include <RcppEigen.h>
@@ -14,12 +15,15 @@
 
 // [[Rcpp::export]]
 Rcpp::List kBOSS(Eigen::MatrixXd& X, Eigen::VectorXd& y, Rcpp::NumericVector freqs, int k_iboss) {
+    sublime_data_check(X, y, true);
+    if (k_iboss == NA_INTEGER || k_iboss <= 0 || freqs.size() != X.cols()) Rcpp::stop("Invalid k or frequency length.");
+    for (double f : freqs) if (!R_FINITE(f) || f < 0) Rcpp::stop("Frequencies must be finite and non-negative.");
 	std::vector<double> freq_count = Rcpp::as<std::vector<double>>(freqs);
 	std::vector<int> active_vars = KMeans2(freq_count);
 
 	Eigen::MatrixXd X_reduced(X.rows(), active_vars.size());
 #ifdef _OPENMP
-	#pragma omp parallel for
+	#pragma omp parallel for num_threads(sublime_threads())
 #endif
 	for(size_t i = 0; i < active_vars.size(); i++) {
 		X_reduced.col(i) = X.col(active_vars[i]);
@@ -37,5 +41,6 @@ Rcpp::List kBOSS(Eigen::MatrixXd& X, Eigen::VectorXd& y, Rcpp::NumericVector fre
 
 // [[Rcpp::export]]
 Rcpp::IntegerVector kmeans2(Rcpp::NumericVector &freq_count) {
+    for (double f : freq_count) if (!R_FINITE(f) || f < 0) Rcpp::stop("Frequencies must be finite and non-negative.");
 	return Rcpp::wrap(KMeans2(Rcpp::as<std::vector<double>>(freq_count)));
 }

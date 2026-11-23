@@ -12,3 +12,6 @@ src/*.dll
 # Datasets
 tests/testthat/ht_tests/*_n10000_p250.csv
 tests/testthat/normal_data.csv
+
+# Local verification copies, libraries, logs and release archives
+/verification/

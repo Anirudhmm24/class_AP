@@ -25,12 +25,13 @@ model on all $N$ observations, each method constructs a
 smaller subset of size $k \ll N$ and fits the model on that subset 
 instead, reducing the computational cost.
 
-The package provides five functions:
+The package provides six functions:
 
 | Function     | Model                       | Idea                                                            |
 |--------------|-----------------------------|-----------------------------------------------------------------|
 | `IBOSS()`    | Linear regression           | Deterministically pick rows with extreme covariate values       |
 | `GenIBOSS()` | GLMs (Logistic, Poisson, …) | IBOSS applied to an information-weighted design                 |
+| `HT()`      | Transformation              | Randomized padded Hadamard transform                            |
 | `SRHT()`     | Linear regression           | Randomized Hadamard sketch, then subsample                      |
 | `CLASS()`    | Lasso                       | Repeated subsampled Lasso + IBOSS to select variables and rows  |
 | `HTCLASS()`  | Lasso                       | `CLASS()` on a Hadamard-transformed matrix                      |

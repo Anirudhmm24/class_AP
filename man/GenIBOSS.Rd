@@ -44,47 +44,13 @@ included before fitting the pilot model if one is not already present.}
 
 \item{header}{Logical indicating whether the CSV file specified by
 \code{csv} contains a header row.}
-
-\item{add_logs}{Logical indicating whether model fit is to be returned}
 }
 \value{
-A list containing the following components:
+A list with:
 \itemize{
-\item \code{X_selected}: Numeric matrix containing the selected
-subdata predictors.
-\item \code{y_selected}: Numeric vector containing the selected
-responses.
-\item \code{final_model}: Fitted generalized linear model of class
-\code{"fastglm"} fitted on the selected subdata. Included only when
-\code{add_logs = TRUE}.
-}
-}
-\description{
-Select an informative subdata for fitting generalized linear and other
-nonlinear regression models using the GenIBOSS (Generalized Information-
-Based Optimal Subdata Selection) algorithm. GenIBOSS is designed for
-large-scale regression problems where fitting a model on the full dataset
-is computationally expensive. The method extends the original IBOSS
-algorithm for linear regression to a broad class of nonlinear models.
-}
-\details{
-GenIBOSS extends the Information-Based Optimal Subdata Selection (IBOSS)
-algorithm from linear regression to a broad class of nonlinear models,
-including generalized linear models. Similar to IBOSS, the objective is
-to construct a deterministic subdata that retains as much statistical
-information as possible while substantially reducing the computational
-cost of model fitting.
-
-For nonlinear models, the Fisher information matrix can be written as
-\deqn{
-I(\delta)=\sum_{i=1}^{N}\delta_i\,z_i z_i^\top,
-}
-where \eqn{z_i} is a model-dependent transformation of the covariates.
-For generalized linear models,
-\deqn{
-z_i=
-\frac{\left|\dot g^{-1}(x_i^\top\theta)\right|}
-{\sqrt{\mathrm{Var}(Y_i\mid x_i)}}x_i,
+\item X_selected: Numeric matrix of selected subset data.
+\item y_selected: Numeric vector of selected subset response.
+\item final_model: Result after performing glm on selected subset.
 }
 where \eqn{g} is the link function.
 
@@ -98,6 +64,20 @@ observations.
 
 The algorithm reduces to the original IBOSS method when the response
 follows a Gaussian distribution with the identity link.
+
+A fitted generalized linear model of class \code{"fastglm"} obtained by
+fitting the specified model to the selected subdata.
+}
+\description{
+Select an informative subdata for fitting generalized linear and other
+nonlinear regression models using the GenIBOSS (Generalized Information-
+Based Optimal Subdata Selection) algorithm. GenIBOSS is designed for
+large-scale regression problems where fitting a model on the full dataset
+is computationally expensive. The method extends the original IBOSS
+algorithm for linear regression to a broad class of nonlinear models.
+}
+\details{
+
 }
 \examples{
 set.seed(42)
@@ -107,17 +87,15 @@ eta <- X \%*\% beta
 p <- 1 / (1 + exp(-eta))
 y <- rbinom(nrow(X), 1, p)
 
-# Subdata selection with model estimation
 fit <- GenIBOSS(
   X = X,
   y = y,
   nSample = 50,
   k = 80,
-  family = binomial(),
-  add_logs = TRUE
+  family = binomial()
 )
 
-coef(fit$final_model)
+coef(fit)
 }
 \references{
 Yu, J., Liu, J., and Wang, H.

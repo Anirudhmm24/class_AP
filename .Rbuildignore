@@ -13,3 +13,6 @@
 ^sublime_.*\.tar\.gz$
 ^.*\.bin$
 ^.*\.desc$
+
+^verification$
+^\.github$

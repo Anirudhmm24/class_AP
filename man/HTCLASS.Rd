@@ -11,7 +11,8 @@ HTCLASS(
   header = FALSE,
   nSample = -1,
   nTimes = -1,
-  k = -1
+  k = -1,
+  seed = NULL
 )
 }
 \arguments{
@@ -30,12 +31,16 @@ predictors. \code{X} and \code{y} must not be supplied when \code{csv} is used.}
 
 \item{nSample}{Positive integer giving the number of observations drawn in
 each repeated LASSO subsample. It cannot exceed the number of rows in the
-data.}
+data.
+At least three rows and two predictor columns are required for LASSO
+cross-validation unless the response is constant.}
 
 \item{nTimes}{Positive integer giving the number of repeated LASSO fits.}
 
 \item{k}{Positive integer giving the number of observations selected by the
 final IBOSS step.}
+
+\item{seed}{Optional non-negative integer random seed.}
 }
 \value{
 A list containing:
@@ -57,7 +62,7 @@ original data.
 Hadamard-Transformed CLASS
 }
 \details{
-Runs CLASS after applying a normalized Hadamard transform to the observations
+Runs CLASS after applying an unnormalized randomized Hadamard transform to the observations
 and response. Repeated LASSO fits on transformed subsamples identify
 consistently selected variables. The selection frequencies are clustered,
 and IBOSS selects an informative subdata from the original data using the
@@ -65,9 +70,10 @@ selected variables. An ordinary least-squares model is then fitted on the
 final subdata.
 
 Let \eqn{X} and \eqn{y} denote the original predictor matrix and response
-vector. HT-CLASS first applies a normalized Hadamard transform:
-\deqn{\widetilde{X}=HX, \qquad \widetilde{y}=Hy,}
-where \eqn{H} is the normalized Hadamard matrix. This mixes information
+vector. HT-CLASS first applies an unnormalized randomized Hadamard transform:
+\deqn{\widetilde{X}=HDX, \qquad \widetilde{y}=HDy,}
+where \eqn{D} contains random signs and \eqn{H} is the unnormalized
+Hadamard matrix after zero padding. This mixes information
 across observations before subsampling, which can make signals localized in
 a small subset of observations more visible to the repeated LASSO fits.
 
@@ -101,12 +107,17 @@ observations before subsampling, HT-CLASS can make their signal more
 consistently represented in the transformed subsamples. This is a motivating
 example rather than a guarantee of improved selection in every dataset.
 
-HTCLASS uses parallel processing to distribute the repeated LASSO fits
-across the available CPU cores. On Unix-alike systems, it uses
-\code{\link[parallel]{mclapply}} for efficient memory-sharing process
-forks. On Windows, it falls back to \code{foreach} and
-\code{bigmemory} to manage parallel execution without excessive memory
-duplication.
+Execution defaults to one in-process worker. Set options(mc.cores = n)
+to request parallel workers; checks force one worker. Unix uses forks and
+Windows socket workers attach to shared bigmemory backing files rather
+than receiving full data copies. Workers and temporary files are cleaned
+up on completion or error, without registering a foreach backend.
+Explicit seed or set.seed() controls repeats for the same platform.
+Per-fit seeds also make scheduling and worker counts reproducible.
+An empty active set uses mean(y) and zero slopes. R-squared is defined
+as zero for a constant response. Rank-deficient OLS sets aliased slopes
+to zero for prediction; they are not identifiable estimates. The returned
+rank and aliased_indices report this (indices are one-based).
 }
 \examples{
 set.seed(42)

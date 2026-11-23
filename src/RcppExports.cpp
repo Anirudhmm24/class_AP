@@ -12,14 +12,30 @@ Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 #endif
 
 // HT_cpp
-Rcpp::List HT_cpp(Eigen::MatrixXd X, Eigen::VectorXd y);
-RcppExport SEXP _sublime_HT_cpp(SEXP XSEXP, SEXP ySEXP) {
+Rcpp::List HT_cpp(Eigen::MatrixXd X, Eigen::VectorXd y, SEXP seed);
+RcppExport SEXP _sublime_HT_cpp(SEXP XSEXP, SEXP ySEXP, SEXP seedSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< Eigen::MatrixXd >::type X(XSEXP);
     Rcpp::traits::input_parameter< Eigen::VectorXd >::type y(ySEXP);
-    rcpp_result_gen = Rcpp::wrap(HT_cpp(X, y));
+    Rcpp::traits::input_parameter< SEXP >::type seed(seedSEXP);
+    rcpp_result_gen = Rcpp::wrap(HT_cpp(X, y, seed));
+    return rcpp_result_gen;
+END_RCPP
+}
+// iboss_cpp
+Rcpp::List iboss_cpp(const Eigen::MatrixXd& X, const Eigen::VectorXd& y, int k, bool intercept, bool add_logs);
+RcppExport SEXP _sublime_iboss_cpp(SEXP XSEXP, SEXP ySEXP, SEXP kSEXP, SEXP interceptSEXP, SEXP add_logsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const Eigen::MatrixXd& >::type X(XSEXP);
+    Rcpp::traits::input_parameter< const Eigen::VectorXd& >::type y(ySEXP);
+    Rcpp::traits::input_parameter< int >::type k(kSEXP);
+    Rcpp::traits::input_parameter< bool >::type intercept(interceptSEXP);
+    Rcpp::traits::input_parameter< bool >::type add_logs(add_logsSEXP);
+    rcpp_result_gen = Rcpp::wrap(iboss_cpp(X, y, k, intercept, add_logs));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -49,7 +65,7 @@ BEGIN_RCPP
 END_RCPP
 }
 // SRHT_cpp
-Rcpp::List SRHT_cpp(Eigen::MatrixXd X, Eigen::VectorXd y, int r, Rcpp::Nullable<int> seed);
+Rcpp::List SRHT_cpp(Eigen::MatrixXd X, Eigen::VectorXd y, int r, SEXP seed);
 RcppExport SEXP _sublime_SRHT_cpp(SEXP XSEXP, SEXP ySEXP, SEXP rSEXP, SEXP seedSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
@@ -57,7 +73,7 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< Eigen::MatrixXd >::type X(XSEXP);
     Rcpp::traits::input_parameter< Eigen::VectorXd >::type y(ySEXP);
     Rcpp::traits::input_parameter< int >::type r(rSEXP);
-    Rcpp::traits::input_parameter< Rcpp::Nullable<int> >::type seed(seedSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type seed(seedSEXP);
     rcpp_result_gen = Rcpp::wrap(SRHT_cpp(X, y, r, seed));
     return rcpp_result_gen;
 END_RCPP
@@ -76,29 +92,14 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// iboss_cpp
-Rcpp::List iboss_cpp(const Eigen::MatrixXd& X, const Eigen::VectorXd& y, int k, bool intercept, bool add_logs);
-RcppExport SEXP _sublime_iboss_cpp(SEXP XSEXP, SEXP ySEXP, SEXP kSEXP, SEXP interceptSEXP, SEXP add_logsSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const Eigen::MatrixXd& >::type X(XSEXP);
-    Rcpp::traits::input_parameter< const Eigen::VectorXd& >::type y(ySEXP);
-    Rcpp::traits::input_parameter< int >::type k(kSEXP);
-    Rcpp::traits::input_parameter< bool >::type intercept(interceptSEXP);
-    Rcpp::traits::input_parameter< bool >::type add_logs(add_logsSEXP);
-    rcpp_result_gen = Rcpp::wrap(iboss_cpp(X, y, k, intercept, add_logs));
-    return rcpp_result_gen;
-END_RCPP
-}
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_sublime_HT_cpp", (DL_FUNC) &_sublime_HT_cpp, 2},
+    {"_sublime_HT_cpp", (DL_FUNC) &_sublime_HT_cpp, 3},
+    {"_sublime_iboss_cpp", (DL_FUNC) &_sublime_iboss_cpp, 5},
     {"_sublime_kBOSS", (DL_FUNC) &_sublime_kBOSS, 4},
     {"_sublime_kmeans2", (DL_FUNC) &_sublime_kmeans2, 1},
     {"_sublime_SRHT_cpp", (DL_FUNC) &_sublime_SRHT_cpp, 4},
     {"_sublime_geniboss_cpp", (DL_FUNC) &_sublime_geniboss_cpp, 4},
-    {"_sublime_iboss_cpp", (DL_FUNC) &_sublime_iboss_cpp, 5},
     {NULL, NULL, 0}
 };
 

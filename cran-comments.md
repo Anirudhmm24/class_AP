@@ -1,10 +1,53 @@
-## Test environments
-* local Windows 11 x64, R 4.5.0 ucrt, Rtools45 (gcc 14.3.0)
-* win-builder (R-devel, R-release)
+## Release status (23 November 2026)
 
-## R CMD check results
+Not ready for submission: CRAN's incoming check reports that the name
+`sublime` is already associated with an archived package (version 1.3).
+Choose an available new name, or resolve ownership with CRAN before submitting.
+Do not merely increase this unrelated package's version to bypass that check.
 
-0 errors | 0 warnings | 0 notes
+The retained final-release archive/check below predates the restoration of
+shared bigmemory backing files for Windows workers. Rebuild and recheck the
+current source before submission. The restored version installed successfully
+and passed the routine suite (502 assertions) plus 12 explicit Windows
+parallel assertions, including backing-file cleanup after success and worker
+errors. See `verification/shared-backing-parallel.log` and `verification/tests.log`.
 
-## Initial submission
-* This is the initial submission of the `sublime` package (version 0.1.0).
+## Verified environment and commands
+
+Windows 11 x64, R 4.5.2, Rtools45 / GCC 14.3.0.
+
+* Normal source installation into a clean workspace library succeeded.
+* Source build with the HTML vignette rendered succeeded.
+* `R CMD check --as-cran --no-manual`: 0 errors, 1 warning, 1 note.
+  The warning is the archived-name/version collision. The note is
+  `unable to verify current time`. Installation, examples, routine tests,
+  documentation, compiled-code checks and vignette rebuilding passed.
+* A separate build with `SHLIB_OPENMP_CXXFLAGS =` installed successfully
+  and passed the routine suite, exercising the native serial fallback.
+* Explicit two-worker Windows runs matched serial results, including HTCLASS.
+  Forced worker failures left no extra open connections or registered backend.
+* Final routine suite: 502 passing assertions, zero failures and errors.
+  Two small-fold glmnet warnings come from the unchanged early-exit test.
+* Routine research/benchmark tests remain opt-in or skipped on CRAN.
+  The early-exit algorithm and its synthetic benchmark were intentionally not
+  changed; the known early-exit findings in the supplied audit remain open.
+
+Logs and test results are retained locally under `verification/` (excluded
+from the source archive and Git). Final archive/check: `final-release/sublime_0.1.0.tar.gz` and
+`final-release/sublime.Rcheck/00check.log`; archive hash and payload audit:
+`final-release/archive-audit.json`. Additional logs:
+`build.log`, `install.log`, `tests.log`, `test-parallel.log`,
+`no-openmp-install.log`, and `no-openmp.log`.
+
+## Remaining release gates
+
+* Resolve the package name, update registration and references, then rebuild
+  and recheck the renamed archive.
+* Run the added GitHub Actions matrix on Linux, macOS, Windows and R-devel;
+  the workflow also includes a no-OpenMP configuration and explicit parallel
+  branch tests. These remote checks have not been run in this session.
+* Run a full manual/PDF check on a machine with the required TeX tools.
+* Confirm maintainer details, verify the final name against CRAN/Archive and
+  Bioconductor, and submit only the final checked archive.
+
+No win-builder or remote-platform results are claimed. No submission was made.

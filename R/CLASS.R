@@ -39,9 +39,6 @@
 #' @param k Positive integer specifying the number of observations to
 #'   select in the final subselection performed by IBOSS.
 #'
-#' @param seed Optional integer specifying the random seed for reproducible
-#'   subsampling and cluster execution. Defaults to `NULL`.
-#'
 #' @return A list containing the following components:
 #' \itemize{
 #'   \item \code{X_f}: Numeric matrix containing the predictor values
@@ -107,11 +104,8 @@
 #' on the selected subdata.
 #'
 #' CLASS uses parallel processing to distribute the repeated LASSO fits
-#' across the available CPU cores. On Unix-alike systems, it uses
-#' \code{\link[parallel]{mclapply}} for efficient memory-sharing process
-#' forks. On Windows, it falls back to \code{foreach} and
-#' \code{bigmemory} to manage parallel execution without excessive memory
-#' duplication.
+#' across the available CPU cores.
+#'
 #' @examples
 #' set.seed(42)
 #' X <- matrix(rnorm(500), nrow = 100, ncol = 5)
@@ -148,16 +142,7 @@
 #' @import doParallel
 #' @import bigmemory
 #' @import parallel
-
-CLASS <- function(X = NULL, y = NULL, csv = NULL, header = FALSE, nSample = -1, nTimes = -1, k = -1, seed = NULL) {
-  if (!is.null(seed)) {
-    if (!is.numeric(seed) || length(seed) != 1L || is.na(seed) || !is.finite(seed)) {
-      stop("seed must be a single finite integer or NULL.")
-    }
-    seed <- as.integer(seed)
-    set.seed(seed)
-  }
-
+CLASS <- function(X = NULL, y = NULL, csv = NULL, header = FALSE, nSample = -1, nTimes = -1, k = -1) {
   if (nSample == -1) {
     stop("Check input CLASS(..., nSample = (pos int), ...")
   }
@@ -186,153 +171,179 @@ CLASS <- function(X = NULL, y = NULL, csv = NULL, header = FALSE, nSample = -1, 
   if (!is.numeric(X) || !is.numeric(y)) stop("X and y must be numeric.")
 
   p <- ncol(X)
+  N <- nrdescridesc setdn<- local_accumulator + as.numeric(coefs != 0)
+    }
 
-  tss <- sum((y - mean(y))^2)
-  if (tss == 0 || all(y == y[1])) {
-    intercept_hat <- mean(y)
-    final_beta <- rep(0, p)
-    return(invisible(list(
-      X_f = matrix(numeric(0), nrow = 0, ncol = 0),
-      y_f = numeric(0),
-      intercept_hat = intercept_hat,
-      beta_final = final_beta,
-      selected_indices = integer(0),
-      feature_counts = rep(0, p),
-      mse = 0,
-      r_squared = 0
-    )))
+    local_accumulator
   }
 
-  if (nSample > nrow(X)) {
+  gc() # Should check if this affects runtime
+  stopCluster(cl)
+
+  # Should optimise the below
+  kboss_res <- kBOSS(X, y, freq_count, k)
+  X_final <- kboss_res$X
+umeric
+r
+sc")
+ow(X)) {
     stop("nSample cannot be larger than number of rows in X")
   }
 
-  chk <- Sys.getenv("_R_CHECK_LIMIT_CORES_", "")
-  limit_cores <- nzchar(chk) && tolower(chk) != "false"
-  if (limit_cores) {
-    nC <- 1L
-  } else {
-    user_cores <- getOption("mc.cores", 1L)
-    if (!is.null(user_cores) && is.numeric(user_cores) && user_cores >= 1L) {
-      nC <- as.integer(user_cores)
-    } else {
-      nC <- 1L
+  X_big <- as.big.matrix(x = X, type = "double", backingfile = "X.bin", descridesc setdn<- local_accumulator + as.numeric(coefs != 0)
     }
+
+    local_accumulator
   }
-  nC <- max(1L, min(nC, as.integer(nTimes)))
+
+  gc() # Should check if this affects runtime
+  stopCluster(cl)
+
+  # Should optimise the below
+  kboss_res <- kBOSS(X, y, freq_count, k)
+  X_final <- kboss_res$X
+umeric
+r
+sc")
+  X_desc <- describe(X_big)
+
+  y_big <- as.big.matrix(x = matrix(y, ncol = 1), type = "double", backingfile = "y.bin", descriptorfile = "y.desc")
+  y_desc <- desc setdn<- local_accumulator + as.numeric(coefs != 0)
+    }
+
+    local_accumulator
+  }
+
+  gc() # Should check if this affects runtime
+  stopCluster(cl)
+
+  # Should optimise the below
+  kboss_res <- kBOSS(X, y, freq_count, k)
+  X_final <- kboss_res$X
+umeric
+r
+
+  nC <- parallel::detectCores() - 1
+  cl <- makeCluster(nC)
+  registerDoParallel(cl)
 
   accumulator <- function(acc, vec) {
     acc + vec
   }
 
-  temp <- nTimes %% nC
-
-  if (.Platform$OS.type == "unix") {
-    freq_count_list <- parallel::mclapply(X = seq_len(nC), FUN = function(i) {
-      local_accumulator <- rep(0, p)
-      work <- if (i <= temp) nTimes %/% nC + 1 else nTimes %/% nC
-
-      for (j in seq_len(work)) {
-        idx <- sample(seq_len(nrow(X)), nSample)
-        X_sub <- X[idx, , drop = FALSE]
-        y_sub <- y[idx]
-
-        fit <- glmnet::cv.glmnet(x = X_sub, y = y_sub, alpha = 1)
-        coefs <- coef(fit, s = "lambda.min")[-1]
-        local_accumulator <- local_accumulator + as.numeric(coefs != 0)
-      }
-      local_accumulator
-    }, mc.cores = nC)
-    
-    freq_count <- Reduce(accumulator, freq_count_list)
-
-  } else {
-    uuid <- paste0(sample(letters, 8, replace = TRUE), collapse = "")
-    x_bin <- paste0("X_", uuid, ".bin")
-    x_desc <- paste0("X_", uuid, ".desc")
-    y_bin <- paste0("y_", uuid, ".bin")
-    y_desc <- paste0("y_", uuid, ".desc")
-    tmp_path <- tempdir()
-    tmp_files <- file.path(tmp_path, c(x_bin, x_desc, y_bin, y_desc))
-    on.exit({
-      if (exists("cl", inherits = FALSE) && inherits(cl, "cluster")) {
-        try(parallel::stopCluster(cl), silent = TRUE)
-      }
-      if (exists("X_big", inherits = FALSE)) rm(X_big)
-      if (exists("y_big", inherits = FALSE)) rm(y_big)
-      gc()
-      unlink(tmp_files)
-    }, add = TRUE)
-
-    X_big <- as.big.matrix(x = X, type = "double", backingfile = x_bin, backingpath = tmp_path, descriptorfile = x_desc)
-    X_desc <- describe(X_big)
-
-    y_big <- as.big.matrix(x = matrix(y, ncol = 1), type = "double", backingfile = y_bin, backingpath = tmp_path, descriptorfile = y_desc)
-    y_desc <- describe(y_big)
-
-    cl <- makeCluster(nC)
-    if (!is.null(seed)) {
-      parallel::clusterSetRNGStream(cl, iseed = as.integer(seed))
-    }
-    parallel::clusterCall(cl, function(lp) .libPaths(lp), .libPaths())
-    registerDoParallel(cl)
-
-    freq_count <- foreach(i = seq_len(nC), .packages = c("bigmemory", "glmnet", "sublime"), .combine = accumulator) %dopar% {
-      X_ref <- attach.big.matrix(X_desc)
-      y_ref <- attach.big.matrix(y_desc)
-
-      local_accumulator <- rep(0, p)
-      work <- if (i <= temp) nTimes %/% nC + 1 else nTimes %/% nC
-
-      for (j in seq_len(work)) {
-        idx <- sample(seq_len(nrow(X_ref)), nSample)
-        X_sub <- X_ref[idx, , drop = FALSE]
-        y_sub <- y_ref[idx]
-
-        fit <- glmnet::cv.glmnet(x = X_sub, y = y_sub, alpha = 1)
-        coefs <- coef(fit, s = "lambda.min")[-1]
-        local_accumulator <- local_accumulator + as.numeric(coefs != 0)
-      }
-      local_accumulator
+  # Workaround to multiple  setdn<- local_accumulator + as.numeric(coefs != 0)
     }
 
-    parallel::stopCluster(cl)
-    rm(cl)
-    rm(X_big, y_big)
-    gc()
-    unlink(tmp_files)
+    local_accumulator
   }
 
+  gc() # Should check if this affects runtime
+  stopCluster(cl)
+
+  # Should optimise the below
+  kboss_res <- kBOSS(X, y, freq_count, k)
+  X_final <- kboss_res$X
+umeric
+r thread
+  # work_distr <- nTimes %/% nC per core and accumulate locally
+  # work_distr[nC] <- work_distr[nC] + (nTimes %% nC) (leftover work for last core)
+
+  temp <- nTimes %% nC
+  setdn<- local_accumulator + as.numeric(coefs != 0)
+    }
+
+    local_accumulator
+  }
+
+  gc() # Should check if this affects runtime
+  stopCluster(cl)
+
+  # Should optimise the below
+  kboss_res <- kBOSS(X, y, freq_count, k)
+  X_final <- kboss_res$X
+umeric
+2)
+  freq_count <- foreach(i = 1:nC, .packages = c("bigmemory", "glmnet", "class"), .combine = accumulator) %dopar% {
+
+    X_ref <- attach.big.matrix(X_desc)
+    y_ref <- attach.big.matrix(y_dn<- local_accumulator + as.numeric(coefs != 0)
+    }
+
+    local_accumulator
+  }
+
+  gc() # Should check if this affects runtime
+  stopCluster(cl)
+
+  # Should optimise the below
+  kboss_res <- kBOSS(X, y, freq_count, k)
+  X_final <- kboss_res$X
+umeric
+    local_accumulator <- rep(0, p)
+
+    work <- if (i <= temp) nTimes %/% nC + 1 else nTimes %/% nC
+
+    for (j in 1:work) {
+      idx <- sample(seq_len(nrow(X_ref)), nSample)
+      X_sub <- X_refn<- local_accumulator + as.numeric(coefs != 0)
+    }
+
+    local_accumulator
+  }
+
+  gc() # Should check if this affects runtime
+  stopCluster(cl)
+
+  # Should optimise the below
+  kboss_res <- kBOSS(X, y, freq_count, k)
+  X_final <- kboss_res$X
+umeric drop = FALSE]
+      y_sub <- y_ref[idx]
+
+      fit <- glmnet::cv.glmnet(x = X_sub, y = y_sub, alpha = 1)
+      coefs <- coef(fit, s = "lambda.min")[-1]
+      local_accumulator <- local_accumulator + as.n<- local_accumulator + as.numeric(coefs != 0)
+    }
+
+    local_accumulator
+  }
+
+  gc() # Should check if this affects runtime
+  stopCluster(cl)
+
+  # Should optimise the below
+  kboss_res <- kBOSS(X, y, freq_count, k)
+  X_final <- kboss_res$X
+umeric(coefs != 0)
+    }
+
+    local_accumulator
+  }
+
+  gc() # Should check if this affects runtime
+  stopCluster(cl)
+
+  # Should optimise the below
+  IBOSS_res <- kBOSS(X, y, freq_count, k)
+  X_final <- kBOSS_res$X
+<- local_accumulator + as.numeric(coefs != 0)
+    }
+
+    local_accumulator
+  }
+
+  gc() # Should check if this affects runtime
+  stopCluster(cl)
+
+  # Should optimise the below
   kboss_res <- kBOSS(X, y, freq_count, k)
   X_final <- kboss_res$X
   y_final <- kboss_res$y
   active_vars <- kboss_res$selected_vars
 
-  if (length(active_vars) == 0) {
-    intercept_hat <- mean(y)
-    final_beta <- rep(0, p)
-    y_pred <- rep(intercept_hat, nrow(X))
-    residuals <- y - y_pred
-    mse <- mean(residuals^2)
-    r_squared <- 0
-
-    return(invisible(list(
-      X_f = X_final,
-      y_f = y_final,
-      intercept_hat = intercept_hat,
-      beta_final = final_beta,
-      selected_indices = integer(0),
-      feature_counts = freq_count,
-      mse = mse,
-      r_squared = r_squared
-    )))
-  }
-
   intercept_col <- rep(x = 1, times = nrow(X_final))
   X_ols <- cbind(intercept_col, X_final)
-  fit_ols <- stats::lm.fit(X_ols, y_final)
-  beta_hat <- fit_ols$coefficients
-  beta_hat[is.na(beta_hat)] <- 0
+  beta_hat <- qr.solve(X_ols, y_final)
 
   intercept_hat <- beta_hat[1]
   beta_reduced  <- beta_hat[-1]
@@ -344,10 +355,9 @@ CLASS <- function(X = NULL, y = NULL, csv = NULL, header = FALSE, nSample = -1, 
   residuals <- y - y_pred
 
   mse <- mean(residuals^2)
-  tss <- sum((y - mean(y))^2)
-  rss <- sum(residuals^2)
-  r_squared <- if (tss == 0) 0 else 1 - rss / tss
+  r_squared <- 1 - sum(residuals^2) / sum((y - mean(y))^2)
 
+  unlink(c("X.bin", "X.desc", "y.bin", "y.desc"))
   return(invisible(list(
     X_f = X_final,
     y_f = y_final,
@@ -359,3 +369,4 @@ CLASS <- function(X = NULL, y = NULL, csv = NULL, header = FALSE, nSample = -1, 
     r_squared = r_squared
   )))
 }
+

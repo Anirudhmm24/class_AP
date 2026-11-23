@@ -10,12 +10,12 @@ These algorithms are:
 - `CLASS()`: Combined Lasso And Subdata Selection. Reduces the time taken to run lasso using sub-data selection.
 - `SRHT()`: Randomized sketching method, reduces the runtime for linear regression by preconditioning the data matrix and then sub-sampling.
 - `HTCLASS()`: An variant of CLASS which works by preconditioning the data with a Hadamard matrix in order to improve accuracy for certain datasets.
-- `CLEAR()`: A variant of CLASS which allows for a lesser number of iterations than CLASS, by exiting early according to some criterion.
+- `HT()`: Random sign modulation and a padded Hadamard transform.
 
 ## Installation
 
 ```r
-install.packages("sublime")
+install.packages("sublime_0.1.0.tar.gz", repos = NULL, type = "source")
 library(sublime)
 ```
 
@@ -142,3 +142,15 @@ CLASS: R. Singh and J. Stufken, “Subdata selection with a large number of vari
 England Journal of Statistics in Data Science, vol. 1, no. 3, pp. 426–438, 2023. https://doi.org/10.51387/23-NEJSDS36
 
 SRHT: J. A. Tropp, "Improved analysis of the subsampled randomized Hadamard transform," Adv. Adapt. Data Anal., vol. 3, no. 1–2, pp. 115–126, 2011. https://doi.org/10.1142/S1793536911000787
+
+## Reproducibility and resources
+
+Native routines default to one thread. Set `options(sublime.threads = 2L)`
+to request more; `_R_CHECK_LIMIT_CORES_` forces one. CLASS and HTCLASS use
+one in-process worker by default; `options(mc.cores = 2L)` requests two.
+The native final-selection stage runs after LASSO workers finish.
+Use explicit `seed` for HT, SRHT, CLASS and HTCLASS. CLASS and HTCLASS also
+support `set.seed()`; HT and SRHT with `seed = NULL` use native entropy.
+Windows parallel workers attach to shared bigmemory backing files in the
+R temporary directory. Each worker copies only its sampled rows for fitting.
+Workers and backing files are cleaned up on completion or error.

@@ -5,7 +5,7 @@
 # - Flips the sign of each row with an independent random +/-1,
 # - Applies a fast Hadamard transform,
 # - Keeps only `k` (out of the zero-padded `n`) rows. 
-# Because it has no seed parameter, the *exact* output is never reproducible, so this file tests it the way randomized algorithms have to be tested:
+# Explicit seeds reproduce sketches; these tests also check algebraic invariants.
 #   - input validation / error handling of the R wrapper (deterministic),
 #   - shape/structure invariants that must hold for every draw,
 #   - exact algebraic invariants that hold regardless of the randomness,
@@ -207,25 +207,23 @@ test_that("for n = 1, the same random sign hits X and y, so their ratio is prese
   # the only randomness is one +/-1 sign, applied identically to every
   # column of X and to y. That sign cancels out of the ratio regardless
   # of which sign was drawn, making this a deterministic check despite
-  # SRHT() having no seed control.
+  # the chosen seed.
   X <- matrix(c(3.5, -2.0), nrow = 1)
   y <- c(7.0)
 
   for (i in 1:5) {
-    res <- SRHT(X = X, y = y, k = 1)
+    res <- SRHT(X = X, y = y, k = 1, seed = i)
     expect_equal(res$y_f[1] / res$X_f[1, 1], y[1] / X[1, 1])
     expect_equal(res$X_f[1, 2] / res$X_f[1, 1], X[1, 2] / X[1, 1])
   }
 })
 
 test_that("repeated SRHT calls on identical input draw different sketches", {
-  # Regression guard against an accidentally fixed/seeded RNG: with no
-  # seed control, two calls on the same input should (almost certainly)
-  # not produce an identical sketch.
+  # Distinct explicit seeds should produce different sketches for this fixture.
   d <- srht_random_fixture(n = 64, p = 2, seed = 61)
 
-  res1 <- SRHT(X = d$X, y = d$y, k = 20)
-  res2 <- SRHT(X = d$X, y = d$y, k = 20)
+  res1 <- SRHT(X = d$X, y = d$y, k = 20, seed = 1)
+  res2 <- SRHT(X = d$X, y = d$y, k = 20, seed = 2)
 
   expect_false(isTRUE(all.equal(res1$X_f, res2$X_f)))
 })

@@ -4,7 +4,14 @@
 \alias{HT}
 \title{Hadamard Transform (HT)}
 \usage{
-HT(X = NULL, y = NULL, csv = NULL, intercept = FALSE, header = FALSE)
+HT(
+  X = NULL,
+  y = NULL,
+  csv = NULL,
+  intercept = FALSE,
+  header = FALSE,
+  seed = NULL
+)
 }
 \arguments{
 \item{X}{A numeric matrix of predictors. Required if \code{csv} is NULL.
@@ -23,6 +30,9 @@ to standardizes the intercept term. Defaults to \code{FALSE}.}
 
 \item{header}{Boolean variable. Indicates if the CSV file contains a header row.
 Passed directly to \code{data.table::fread}. Defaults to \code{FALSE}.}
+
+\item{seed}{Optional non-negative integer seed. NULL uses native entropy,
+which is not controlled by set.seed().}
 }
 \value{
 A list containing:
@@ -37,12 +47,16 @@ hadamard transform on it. It handles input from either in-memory matrices
 or CSV files, checks for an intercept, ensures correct data types, and
 passes the data to the optimized C++ implementation.
 }
+\details{
+The transform uses random signs and the unnormalized Hadamard
+matrix, with zero padding to the next power of two.
+}
 \examples{
 set.seed(42)
 X <- matrix(rnorm(100), nrow = 20, ncol = 5)
 y <- rnorm(20)
 
-res <- HT(X = X, y = y)
+res <- HT(X = X, y = y, seed = 42)
 dim(res$X_f)
 length(res$y_f)
 

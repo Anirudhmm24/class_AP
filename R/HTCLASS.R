@@ -2,7 +2,7 @@
 #'
 #' Hadamard-Transformed CLASS
 #'
-#' Runs CLASS after applying a normalized Hadamard transform to the observations
+#' Runs CLASS after applying an unnormalized randomized Hadamard transform to the observations
 #' and response. Repeated LASSO fits on transformed subsamples identify
 #' consistently selected variables. The selection frequencies are clustered,
 #' and IBOSS selects an informative subdata from the original data using the
@@ -21,7 +21,10 @@
 #' @param nSample Positive integer giving the number of observations drawn in
 #'   each repeated LASSO subsample. It cannot exceed the number of rows in the
 #'   data.
+#'   At least three rows and two predictor columns are required for LASSO
+#'   cross-validation unless the response is constant.
 #' @param nTimes Positive integer giving the number of repeated LASSO fits.
+#' @param seed Optional non-negative integer random seed.
 #' @param k Positive integer giving the number of observations selected by the
 #'   final IBOSS step.
 #'
@@ -53,9 +56,10 @@
 #'
 #' @details
 #' Let \eqn{X} and \eqn{y} denote the original predictor matrix and response
-#' vector. HT-CLASS first applies a normalized Hadamard transform:
-#' \deqn{\widetilde{X}=HX, \qquad \widetilde{y}=Hy,}
-#' where \eqn{H} is the normalized Hadamard matrix. This mixes information
+#' vector. HT-CLASS first applies an unnormalized randomized Hadamard transform:
+#' \deqn{\widetilde{X}=HDX, \qquad \widetilde{y}=HDy,}
+#' where \eqn{D} contains random signs and \eqn{H} is the unnormalized
+#' Hadamard matrix after zero padding. This mixes information
 #' across observations before subsampling, which can make signals localized in
 #' a small subset of observations more visible to the repeated LASSO fits.
 #'
@@ -89,12 +93,17 @@
 #' consistently represented in the transformed subsamples. This is a motivating
 #' example rather than a guarantee of improved selection in every dataset.
 #'
-#' HTCLASS uses parallel processing to distribute the repeated LASSO fits
-#' across the available CPU cores. On Unix-alike systems, it uses
-#' \code{\link[parallel]{mclapply}} for efficient memory-sharing process
-#' forks. On Windows, it falls back to \code{foreach} and
-#' \code{bigmemory} to manage parallel execution without excessive memory
-#' duplication.
+#' Execution defaults to one in-process worker. Set options(mc.cores = n)
+#' to request parallel workers; checks force one worker. Unix uses forks and
+#' Windows socket workers attach to shared bigmemory backing files rather
+#' than receiving full data copies. Workers and temporary files are cleaned
+#' up on completion or error, without registering a foreach backend.
+#' Explicit seed or set.seed() controls repeats for the same platform.
+#' Per-fit seeds also make scheduling and worker counts reproducible.
+#' An empty active set uses mean(y) and zero slopes. R-squared is defined
+#' as zero for a constant response. Rank-deficient OLS sets aliased slopes
+#' to zero for prediction; they are not identifiable estimates. The returned
+#' rank and aliased_indices report this (indices are one-based).
 #'
 #' @examples
 #' set.seed(42)
@@ -116,166 +125,6 @@
 #' \doi{10.1137/090771806}
 #'
 #' @export
-HTCLASS <- function(X = NULL, y = NULL, csv = NULL, header = FALSE, nSample = -1, nTimes = -1, k = -1) {
-  if (nSample == -1) {
-    stop("Check input CLASS(..., nSample = (pos int), ...")
-  }
-  if (nTimes == -1) {
-    stop("Check input CLASS(..., nTimes = (pos int), ...")
-  }
-  if (k == -1) {
-    stop("Check input CLASS(..., k = (pos int), ...")
-  }
-  if (!is.null(csv)) {
-    if (!file.exists(csv)) stop("CSV file doesn't exist at given path.")
-    if (!is.null(X) || !is.null(y)) stop("Provide either csv OR {X, y}, not both.")
-
-    dat <- data.table::fread(csv, header = header)
-    dat <- as.matrix(dat)
-
-    X <- dat[, -ncol(dat), drop = FALSE]
-    y <- dat[,  ncol(dat)]
-  }
-  else {
-    if (is.null(X) || is.null(y)) stop("Provide either csv OR {X, y}.")
-    if (!is.matrix(X)) X <- as.matrix(X)
-  }
-
-  if (nrow(X) != length(y)) stop("X and y must have same number of rows.")
-  if (!is.numeric(X) || !is.numeric(y)) stop("X and y must be numeric.")
-
-  p <- ncol(X)
-
-  if (nSample > nrow(X)) {
-    stop("nSample cannot be larger than number of rows in X")
-  }
-
-  HT_res <- HT(X, y, intercept = FALSE)
-
-  X_HT <- HT_res$X_f
-  y_HT <- HT_res$y_f
-
-  chk <- Sys.getenv("_R_CHECK_LIMIT_CORES_", "")
-  limit_cores <- nzchar(chk) && tolower(chk) != "false"
-  if (limit_cores) {
-    nC <- 1L
-  } else {
-    user_cores <- getOption("mc.cores", 1L)
-    if (!is.null(user_cores) && is.numeric(user_cores) && user_cores >= 1L) {
-      nC <- as.integer(user_cores)
-    } else {
-      nC <- 1L
-    }
-  }
-  nC <- max(1L, min(nC, as.integer(nTimes)))
-
-  accumulator <- function(acc, vec) {
-    acc + vec
-  }
-  
-  temp <- nTimes %% nC
-
-  if (.Platform$OS.type == "unix") {
-    freq_count_list <- parallel::mclapply(X = seq_len(nC), FUN = function(i) {
-      local_accumulator <- rep(0, p)
-      work <- if (i <= temp) nTimes %/% nC + 1 else nTimes %/% nC
-
-      for (j in seq_len(work)) {
-        idx <- sample(seq_len(nrow(X_HT)), nSample)
-        X_sub <- X_HT[idx, , drop = FALSE]
-        y_sub <- y_HT[idx]
-
-        fit <- glmnet::cv.glmnet(x = X_sub, y = y_sub, alpha = 1)
-        coefs <- coef(fit, s = "lambda.min")[-1]
-        local_accumulator <- local_accumulator + as.numeric(coefs != 0)
-      }
-      local_accumulator
-    }, mc.cores = nC)
-
-    freq_count <- Reduce(accumulator, freq_count_list)
-  } else {
-    uuid <- paste0(sample(letters, 8, replace = TRUE), collapse = "")
-    x_bin <- paste0("X_", uuid, ".bin")
-    x_desc <- paste0("X_", uuid, ".desc")
-    y_bin <- paste0("y_", uuid, ".bin")
-    y_desc <- paste0("y_", uuid, ".desc")
-    tmp_path <- tempdir()
-    tmp_files <- file.path(tmp_path, c(x_bin, x_desc, y_bin, y_desc))
-    on.exit({
-      if (exists("cl", inherits = FALSE) && inherits(cl, "cluster")) {
-        try(parallel::stopCluster(cl), silent = TRUE)
-      }
-      if (exists("X_big", inherits = FALSE)) rm(X_big)
-      if (exists("y_big", inherits = FALSE)) rm(y_big)
-      gc()
-      unlink(tmp_files)
-    }, add = TRUE)
-
-    X_big <- as.big.matrix(x = X_HT, type = "double", backingfile = x_bin, backingpath = tmp_path, descriptorfile = x_desc)
-    X_desc <- describe(X_big)
-
-    y_big <- as.big.matrix(x = matrix(y_HT, ncol = 1), type = "double", backingfile = y_bin, backingpath = tmp_path, descriptorfile = y_desc)
-    y_desc <- describe(y_big)
-
-    cl <- makeCluster(nC)
-    parallel::clusterCall(cl, function(lp) .libPaths(lp), .libPaths())
-    registerDoParallel(cl)
-
-    freq_count <- foreach(i = seq_len(nC), .packages = c("bigmemory", "glmnet", "sublime"), .combine = accumulator) %dopar% {
-      X_ref <- attach.big.matrix(X_desc)
-      y_ref <- attach.big.matrix(y_desc)
-
-      local_accumulator <- rep(0, p)
-      work <- if (i <= temp) nTimes %/% nC + 1 else nTimes %/% nC
-
-      for (j in seq_len(work)) {
-        idx <- sample(seq_len(nrow(X_ref)), nSample)
-        X_sub <- X_ref[idx, , drop = FALSE]
-        y_sub <- y_ref[idx]
-
-        fit <- glmnet::cv.glmnet(x = X_sub, y = y_sub, alpha = 1)
-        coefs <- coef(fit, s = "lambda.min")[-1]
-        local_accumulator <- local_accumulator + as.numeric(coefs != 0)
-      }
-      local_accumulator
-    }
-    
-    parallel::stopCluster(cl)
-    rm(cl)
-    rm(X_big, y_big)
-    gc()
-    unlink(tmp_files)
-  }
-
-  kboss_res <- kBOSS(X, y, freq_count, k)
-  X_final <- kboss_res$X
-  y_final <- kboss_res$y
-  active_vars <- kboss_res$selected_vars
-
-  intercept_col <- rep(x = 1, times = nrow(X_final))
-  X_ols <- cbind(intercept_col, X_final)
-  beta_hat <- qr.solve(X_ols, y_final)
-
-  intercept_hat <- beta_hat[1]
-  beta_reduced  <- beta_hat[-1]
-
-  final_beta <- rep(0, p)
-  final_beta[active_vars + 1] <- beta_reduced
-
-  y_pred <- intercept_hat + X %*% final_beta
-  residuals <- y - y_pred
-
-  mse <- mean(residuals^2)
-  r_squared <- 1 - sum(residuals^2) / sum((y - mean(y))^2)
-
-  return(invisible(list(
-    X_f = X_final,
-    y_f = y_final,
-    intercept_hat = intercept_hat,
-    beta_final = final_beta,
-    selected_indices = active_vars + 1,
-    feature_counts = freq_count,
-    mse = mse,
-    r_squared = r_squared
-  )))
+HTCLASS <- function(X = NULL, y = NULL, csv = NULL, header = FALSE, nSample = -1, nTimes = -1, k = -1, seed = NULL) {
+  .class_run(X, y, csv, header, nSample, nTimes, k, seed, transform = TRUE)
 }

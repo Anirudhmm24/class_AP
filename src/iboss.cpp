@@ -1,3 +1,4 @@
+#include "sublime_control.h"
 #include <RcppEigen.h>
 #include <algorithm>
 #include <chrono>
@@ -202,6 +203,7 @@ static void merge_top_candidates(
             TopComp{}
         );
     }
+    std::sort(scratch.begin(), scratch.begin() + take, TopComp{});
     out.reserve(take);
     for (int i = 0; i < take; ++i) {
         out.push_back(scratch[i].idx);
@@ -236,6 +238,7 @@ static void merge_bottom_candidates(
             BottomComp{}
         );
     }
+    std::sort(scratch.begin(), scratch.begin() + take, BottomComp{});
     out.reserve(take);
     for (int i = 0; i < take; ++i) {
         out.push_back(scratch[i].idx);
@@ -292,7 +295,7 @@ void IBOSS(
     nums.reserve(static_cast<std::size_t>(k));
 
 #ifdef _OPENMP
-    const int max_threads = std::max(1, omp_get_max_threads());
+    const int max_threads = sublime_threads();
 #else
     const int max_threads = 1;
 #endif
@@ -318,7 +321,7 @@ void IBOSS(
 #endif
 
 #ifdef _OPENMP
-    #pragma omp parallel shared(current_offset, nums, selected, local_max, local_min, scratch, winners_max, winners_min)
+    #pragma omp parallel num_threads(sublime_threads()) shared(current_offset, nums, selected, local_max, local_min, scratch, winners_max, winners_min)
 #endif
     {
 #ifdef _OPENMP
@@ -409,7 +412,7 @@ void IBOSS(
 #endif
 
 #ifdef _OPENMP
-    #pragma omp parallel for schedule(static)
+    #pragma omp parallel for num_threads(sublime_threads()) schedule(static)
 #endif
     for (Index j = 0; j < p; ++j) {
         const double* src = X.col(j).data();
@@ -428,7 +431,7 @@ void IBOSS(
     double* y_out = y_iboss.data();
 
 #ifdef _OPENMP
-    #pragma omp parallel for schedule(static)
+    #pragma omp parallel for num_threads(sublime_threads()) schedule(static)
 #endif
     for (int i = 0; i < current_offset; ++i)
         y_out[i] = y_ptr[nums[static_cast<std::size_t>(i)]];

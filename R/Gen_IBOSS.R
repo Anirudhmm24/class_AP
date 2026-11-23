@@ -42,6 +42,10 @@
 #' @import fastglm
 #'
 #' @details
+#' Pilot sampling uses R's RNG and can be controlled with set.seed().
+#' A first column of ones is reused when intercept = TRUE. If add_logs = TRUE
+#' and an intercept must be inserted, X_selected includes that extra column.
+#' Failed, rank-deficient or non-finite pilot fits are rejected.
 #' GenIBOSS extends the Information-Based Optimal Subdata Selection (IBOSS)
 #' algorithm from linear regression to a broad class of nonlinear models,
 #' including generalized linear models. Similar to IBOSS, the objective is
@@ -113,6 +117,8 @@
 #'
 #' coef(fit$final_model)
 GenIBOSS <- function(X = NULL, y = NULL, csv = NULL, nSample=-1, k=-1, family, intercept = FALSE, header = FALSE, add_logs = FALSE) {
+  .sublime_flag(add_logs, "add_logs")
+
   if (identical(nSample, -1) || identical(nSample, -1L)) {
     stop("Check input GenIBOSS(..., nSample = (pos int), ...")
   }
@@ -124,11 +130,11 @@ GenIBOSS <- function(X = NULL, y = NULL, csv = NULL, nSample=-1, k=-1, family, i
     stop("header must be a single TRUE/FALSE value.")
   }
 
-  if (!is.numeric(nSample) || length(nSample) != 1L || is.na(nSample) || !is.finite(nSample) || nSample <= 0 || nSample != as.integer(nSample)) {
+  if (!is.numeric(nSample) || length(nSample) != 1L || is.na(nSample) || !is.finite(nSample) || nSample <= 0 || nSample > .Machine$integer.max || nSample != floor(nSample)) {
     stop("nSample must be a positive finite integer.")
   }
 
-  if (!is.numeric(k) || length(k) != 1L || is.na(k) || !is.finite(k) || k <= 0 || k != as.integer(k)) {
+  if (!is.numeric(k) || length(k) != 1L || is.na(k) || !is.finite(k) || k <= 0 || k > .Machine$integer.max || k != floor(k)) {
     stop("k must be a positive finite integer.")
   }
 
@@ -141,7 +147,8 @@ GenIBOSS <- function(X = NULL, y = NULL, csv = NULL, nSample=-1, k=-1, family, i
   }
 
   required_family_fields <- c("linkinv", "mu.eta", "variance")
-  if (!is.list(family) || !all(required_family_fields %in% names(family))) {
+  if (!is.list(family) || !all(required_family_fields %in% names(family)) ||
+      !all(vapply(family[required_family_fields], is.function, logical(1)))) {
     stop("family must define linkinv, mu.eta, and variance.")
   }
 
@@ -177,10 +184,14 @@ GenIBOSS <- function(X = NULL, y = NULL, csv = NULL, nSample=-1, k=-1, family, i
   X_sub <- X[idx, , drop = FALSE]
   y_sub <- y[idx]
 
-  if (intercept) X_sub = cbind(1, X_sub)
-  coef_vector <- unname(fastglmPure(X_sub, y_sub, family = family)$coefficients)
-
-  X_design <- if (intercept) cbind(1, X) else X
+  add_intercept <- intercept && !all(X[, 1] == 1)
+  if (add_intercept) X_sub <- cbind(1, X_sub)
+  if (qr(X_sub)$rank < ncol(X_sub)) stop("Pilot design is rank deficient; increase nSample or remove dependent predictors.")
+  pilot <- fastglm::fastglmPure(X_sub, y_sub, family = family)
+  coef_vector <- unname(pilot$coefficients)
+  if (!isTRUE(pilot$converged) || length(coef_vector) != ncol(X_sub) || any(!is.finite(coef_vector)))
+    stop("Pilot fit failed to converge to finite coefficients.")
+  X_design <- if (add_intercept) cbind(1, X) else X
   eta <- as.numeric(X_design %*% coef_vector)
   mu <- family$linkinv(eta)
 
@@ -189,12 +200,14 @@ GenIBOSS <- function(X = NULL, y = NULL, csv = NULL, nSample=-1, k=-1, family, i
   var_val <- family$variance(mu)
 
   # stddev
+  if (any(!is.finite(var_val)) || any(var_val <= 0)) stop("Pilot produced invalid variances.")
   sd_y <- sqrt(var_val)
   wt <- abs(mu_eta) / sd_y
+  if (length(wt) != nrow(X) || any(!is.finite(wt))) stop("Pilot produced invalid weights.")
 
   res <- geniboss_cpp(X, y, wt, as.integer(k))
   if (add_logs) {
-    if (intercept) res$X_selected = cbind(1, res$X_selected)
+    if (add_intercept) res$X_selected = cbind(1, res$X_selected)
     final_model <- fastglm(res$X_selected, res$y_selected, family = family)
 
     return(list(

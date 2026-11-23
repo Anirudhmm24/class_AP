@@ -1,3 +1,4 @@
+#include "sublime_control.h"
 #include "SRHT.h"
 #include <Eigen/Dense>
 #include <vector>
@@ -111,7 +112,7 @@ std::pair<MatrixXd, VectorXd> SRHT(
 
     MatrixXd X_f(r, d);
 #ifdef _OPENMP
-    #pragma omp parallel
+    #pragma omp parallel num_threads(sublime_threads())
 #endif
     {
         VectorXd temp = VectorXd::Zero(n_padded);

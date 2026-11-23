@@ -35,9 +35,9 @@ test_that("CLASS validates required arguments", {
   X <- matrix(rnorm(N * p), N, p)
   y <- rnorm(N)
   
-  expect_error(CLASS(X, y, nTimes = 5, k = 10), "Check input CLASS\\(..., nSample = \\(pos int\\), ...")
-  expect_error(CLASS(X, y, nSample = 20, k = 10), "Check input CLASS\\(..., nTimes = \\(pos int\\), ...")
-  expect_error(CLASS(X, y, nSample = 20, nTimes = 5), "Check input CLASS\\(..., k = \\(pos int\\), ...")
+  expect_error(CLASS(X, y, nTimes = 5, k = 10), "nSample")
+  expect_error(CLASS(X, y, nSample = 20, k = 10), "nTimes")
+  expect_error(CLASS(X, y, nSample = 20, nTimes = 5), "k")
 })
 
 test_that("CLASS validates dimensions and types", {

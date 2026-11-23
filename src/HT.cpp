@@ -1,3 +1,4 @@
+#include "sublime_control.h"
 #include "HT.h"
 #include <Eigen/Dense>
 #include <vector>
@@ -57,14 +58,15 @@ void multiply_HT(double* __restrict y, int n)
     }
 }
 
-std::pair<MatrixXd, VectorXd> HT(const MatrixXd& A, const VectorXd& b)
+std::pair<MatrixXd, VectorXd> HT(const MatrixXd& A, const VectorXd& b, std::optional<uint64_t> seed)
 {
     int n = static_cast<int>(A.rows());
     int d = static_cast<int>(A.cols());
     unsigned int n_padded = bit_ceil((unsigned)n);
 
-    random_device rd;
-    mt19937_64 mt((static_cast<uint64_t>(rd()) << 32) ^ static_cast<uint64_t>(rd()));
+    mt19937_64 mt;
+    if (seed.has_value()) mt.seed(seed.value());
+    else { random_device rd; mt.seed((static_cast<uint64_t>(rd()) << 32) ^ static_cast<uint64_t>(rd())); }
     VectorXd diagonal(n);
 
     int idx = 0;
@@ -86,7 +88,7 @@ std::pair<MatrixXd, VectorXd> HT(const MatrixXd& A, const VectorXd& b)
 
     MatrixXd X_f(n_padded, d);
 #ifdef _OPENMP
-    #pragma omp parallel
+    #pragma omp parallel num_threads(sublime_threads())
 #endif
     {
 #ifdef _OPENMP

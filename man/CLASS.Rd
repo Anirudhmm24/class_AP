@@ -36,7 +36,10 @@ must not be supplied when \code{csv} is used.}
 
 \item{nSample}{Positive integer specifying the number of observations
 drawn in each uniform subsample used for the repeated LASSO fits.
-It cannot exceed the number of observations in the dataset.}
+It cannot exceed the number of observations in the dataset.
+
+At least three rows and two predictor columns are required for LASSO
+cross-validation unless the response is constant.}
 
 \item{nTimes}{Positive integer specifying the total number of repeated
 LASSO fits performed by CLASS. The repeated fits are distributed
@@ -124,12 +127,17 @@ The reported \code{mse} and \code{r_squared} values are calculated
 using these predictions on the full input dataset rather than only
 on the selected subdata.
 
-CLASS uses parallel processing to distribute the repeated LASSO fits
-across the available CPU cores. On Unix-alike systems, it uses
-\code{\link[parallel]{mclapply}} for efficient memory-sharing process
-forks. On Windows, it falls back to \code{foreach} and
-\code{bigmemory} to manage parallel execution without excessive memory
-duplication.
+Execution defaults to one in-process worker. Set options(mc.cores = n)
+to request parallel workers; checks force one worker. Unix uses forks and
+Windows socket workers attach to shared bigmemory backing files rather
+than receiving full data copies. Workers and temporary files are cleaned
+up on completion or error, without registering a foreach backend.
+Explicit seed or set.seed() controls repeats for the same platform.
+Per-fit seeds also make scheduling and worker counts reproducible.
+An empty active set uses mean(y) and zero slopes. R-squared is defined
+as zero for a constant response. Rank-deficient OLS sets aliased slopes
+to zero for prediction; they are not identifiable estimates. The returned
+rank and aliased_indices report this (indices are one-based).
 }
 \examples{
 set.seed(42)

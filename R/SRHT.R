@@ -15,7 +15,7 @@
 #'   \code{X} and \code{y} must be NULL. The function assumes the last column
 #'   of the CSV is the response variable \code{y} and all preceding columns
 #'   are predictors \code{X}.
-#' @param k Positive integer specifying the number of transformed rows to
+#' @param k Non-negative integer specifying the number of transformed rows to
 #'   return. The current implementation samples transformed row indices with
 #'   replacement, so duplicate rows may occur in the result.
 #' @param intercept Logical; if `TRUE`, checks whether the first column of `X`
@@ -23,7 +23,7 @@
 #'   to `FALSE`.
 #' @param header Logical; whether the CSV file contains a header row.
 #' @param seed Optional integer for reproducible random signs and sampling.
-#'   Defaults to `NULL` for natural hardware randomization.
+#'   Defaults to `NULL` for native entropy independent of R's RNG.
 #'
 #' @return A list with the following components:
 #' \itemize{
@@ -45,23 +45,22 @@
 #' scaling factor is omitted because it cancels when the sketched data are
 #' used in the subsequent least-squares calculation.
 #'
-#' Because the sign vector and sampled indices are random, repeated calls with
-#' the same inputs can return different subdata. The current R wrapper does not
-#' expose a seed argument; reproducibility therefore requires controlling the
-#' random state in the underlying implementation or adding an explicit seed to
-#' the C++ interface.
+#' Supply seed for reproducible native signs and row sampling. With seed = NULL,
+#' native entropy is used; set.seed() alone does not control this randomness.
 #'
 #' @examples
 #' set.seed(42)
 #' X <- matrix(rnorm(400), nrow = 100, ncol = 4)
 #' y <- rnorm(100)
 #'
-#' sketched <- SRHT(X = X, y = y, k = 20)
+#' sketched <- SRHT(X = X, y = y, k = 20, seed = 42)
 #' dim(sketched$X_f)
 #' length(sketched$y_f)
 #'
 #' @references
-#' Tropp, J. A., Yurtsever, A. C., Udell, M. A., Volgushev, S. and
+#' The following reference discusses randomized sketching; this implementation
+#' uses an unnormalized Hadamard transform and samples with replacement.
+#' Tropp, J. A., Yurtsever, A., Udell, M. and
 #' Cevher, V. (2017). Practical sketching algorithms for low-rank matrix
 #' approximation. \emph{SIAM Journal on Matrix Analysis and Applications},
 #' 38(4), 1454--1485.
@@ -73,30 +72,12 @@
 #' @export
 SRHT <- function(X = NULL, y = NULL, csv = NULL, k, intercept = FALSE, header = FALSE, seed = NULL) {
 
-  if (!is.null(csv)) {
-    if (!file.exists(csv)) stop("CSV file doesn't exist at given path.")
-    if (!is.null(X) || !is.null(y)) stop("Provide either csv OR {X, y}, not both.")
+  .sublime_flag(intercept, "intercept")
+  seed <- .sublime_seed(seed)
+  data <- .sublime_data(X, y, csv, header)
+  X <- data$X; y <- data$y
 
-    dat <- data.table::fread(csv, header = header)
-    dat <- as.matrix(dat)
-
-    X <- dat[, -ncol(dat), drop = FALSE]
-    y <- dat[,  ncol(dat)]
-  }
-  else {
-    if (is.null(X) || is.null(y)) stop("Provide either csv OR {X, y}.")
-    if (!is.matrix(X)) X <- as.matrix(X)
-  }
-
-  if (nrow(X) != length(y)) stop("X and y must have same number of rows.")
-  if (!is.numeric(X) || !is.numeric(y)) stop("X and y must be numeric.")
-  if (nrow(X) < 1L) stop("X must have at least one row.")
-  if (ncol(X) < 1L) stop("X must have at least one predictor column.")
-  if (any(!is.finite(X)) || any(!is.finite(y))) stop("X and y must contain only finite numeric values.")
-
-  if (missing(k) || !is.numeric(k) || length(k) != 1L || is.na(k) || !is.finite(k) || k < 0 || k != as.integer(k)) {
-    stop("k must be a non-negative finite integer.")
-  }
+  k <- .sublime_integer(k, "k", 0)
 
   if (k == 0) {
     p_cols <- if (intercept && !all(abs(X[, 1] - 1) < 1e-9)) ncol(X) + 1L else ncol(X)
@@ -113,16 +94,10 @@ SRHT <- function(X = NULL, y = NULL, csv = NULL, k, intercept = FALSE, header = 
     }
   }
 
-  if (!is.null(seed)) {
-    if (!is.numeric(seed) || length(seed) != 1L || is.na(seed) || !is.finite(seed)) {
-      stop("seed must be a single finite integer or NULL.")
-    }
-    seed <- as.integer(seed)
-  }
 
   storage.mode(X) <- "double"
   storage.mode(y) <- "double"
 
-  res <- suppressWarnings(SRHT_cpp(X, y, as.integer(k), seed))
+  res <- SRHT_cpp(X, y, as.integer(k), seed)
   return(res)
 }

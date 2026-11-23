@@ -57,31 +57,22 @@
 #'
 #' Since finding the exact D-optimal subset is computationally infeasible
 #' for massive datasets, IBOSS constructs a deterministic subdata by
-#' selecting observations with extreme covariate values. Theoretical
-#' analysis in the original paper establishes the lower bound
-#' \deqn{
-#' |I(\beta)|
-#' \ge
-#' \frac{k^{p+1}}
-#' {4^p\sigma^{2(p+1)}}
-#' \prod_{j=1}^{p}
-#' \left(z_{(n)j}-z_{(1)j}\right)^2,
-#' }
-#' where \eqn{k} is the subdata size,
-#' \eqn{p} is the number of predictors,
-#' and \eqn{z_{(1)j}} and \eqn{z_{(n)j}} denote the minimum and maximum
-#' values of the \eqn{j}-th predictor, respectively.
+#' selecting observations with extreme covariate values. Requested sizes are
+#' capped at the number of input rows. Ties use original row indices; any
+#' remaining quota is filled in original row order without replacement.
 #'
 #' @return
 #' A list containing the following components:
 #'
 #' \itemize{
 #'   \item \code{X_selected}: A numeric matrix of dimension
-#'   \eqn{k \times p}, where \eqn{k} is the requested subdata size and
+#'   min(k, nrow(X)) rows, where k is the requested subdata size and
 #'   \eqn{p} is the number of predictor variables.
 #'
-#'   \item \code{y_selected}: A numeric vector of length \eqn{k}
+#'   \item \code{y_selected}: A numeric vector of length min(k, nrow(X))
 #'   containing the responses corresponding to the selected observations.
+#'   \item \code{final_model}: An lm.fit result when add_logs = TRUE.
+#'   A column of ones is prepended unless intercept = TRUE.
 #' }
 #'
 #' @export
@@ -112,6 +103,8 @@ IBOSS <- function(
     intercept = FALSE,
     header = FALSE,
     add_logs = FALSE) {
+
+  .sublime_flag(add_logs, "add_logs")
 
   if (!is.logical(intercept) || length(intercept) != 1L || is.na(intercept)) {
     stop("intercept must be a single TRUE/FALSE value.")
@@ -145,7 +138,7 @@ IBOSS <- function(
     stop("When intercept = TRUE, X must include at least one non-intercept predictor column.")
   }
 
-  if (!is.numeric(k) || length(k) != 1L || is.na(k) || !is.finite(k) || k <= 0 || k != as.integer(k)) {
+  if (!is.numeric(k) || length(k) != 1L || is.na(k) || !is.finite(k) || k <= 0 || k > .Machine$integer.max || k != floor(k)) {
     stop("k must be a positive finite integer.")
   }
 
@@ -153,5 +146,11 @@ IBOSS <- function(
     stop("X and y must contain only finite numeric values.")
   }
 
-  return(iboss_cpp(X, y, as.integer(k), intercept, add_logs))
+  if (intercept && !all(X[, 1] == 1)) stop("intercept requires a first column of ones.")
+  res <- iboss_cpp(X, y, as.integer(k), intercept, add_logs)
+  if (add_logs) {
+    design <- if (intercept) res$X_selected else cbind(1, res$X_selected)
+    res$final_model <- stats::lm.fit(design, res$y_selected)
+  }
+  res
 }

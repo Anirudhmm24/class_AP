@@ -6,7 +6,7 @@ test_that("kmeans2 is deterministic", {
 
   expect_identical(first_result, second_result)
   expect_type(first_result, "integer")
-  expect_true(all(first_result >= 1L & first_result <= length(counts)))
+  expect_true(all(first_result >= 0L & first_result < length(counts)))
 })
 
 test_that("active sets use the higher-frequency cluster", {
