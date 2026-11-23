@@ -205,7 +205,7 @@ GenIBOSS <- function(X = NULL, y = NULL, csv = NULL, nSample=-1, k=-1, family, i
   wt <- abs(mu_eta) / sd_y
   if (length(wt) != nrow(X) || any(!is.finite(wt))) stop("Pilot produced invalid weights.")
 
-  res <- geniboss_cpp(X_design, y, wt, as.integer(k))
+  res <- geniboss_cpp(X, y, wt, as.integer(k))
   if (add_logs) {
     if (add_intercept) res$X_selected = cbind(1, res$X_selected)
     final_model <- fastglm(res$X_selected, res$y_selected, family = family)
