@@ -192,7 +192,7 @@ GenIBOSS <- function(X = NULL, y = NULL, csv = NULL, nSample=-1, k=-1, family, i
   if (!isTRUE(pilot$converged) || length(coef_vector) != ncol(X_sub) || any(!is.finite(coef_vector)))
     stop("Pilot fit failed to converge to finite coefficients.")
   X_design <- if (add_intercept) cbind(1, X) else X
-  eta <- as.numeric(X_design %*% coef_vector)
+  eta <- as.numeric(X %*% coef_vector)
   mu <- family$linkinv(eta)
 
   # derivative
