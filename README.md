@@ -131,18 +131,6 @@ res$beta_final
 res$mse
 ```
 
-## References
-IBOSS: H. Wang, M. Yang, and J. Stufken, “Information-based optimal subdata selection for big
-data linear regression,” Journal of the American Statistical Association, vol. 114, no. 525,
-pp. 393–405, 2019. https://doi.org/10.1080/01621459.2017.1408468
-
-GenIBOSS: J. Yu, J. Liu, and H. Wang, "Information-based optimal subdata selection for non-linear models," Statistical Papers, vol. 64, no. 4, pp. 1069–1093, Aug. 2023. https://doi.org/10.1007/s00362-023-01430-3
-
-CLASS: R. Singh and J. Stufken, “Subdata selection with a large number of variables,” The New
-England Journal of Statistics in Data Science, vol. 1, no. 3, pp. 426–438, 2023. https://doi.org/10.51387/23-NEJSDS36
-
-SRHT: J. A. Tropp, "Improved analysis of the subsampled randomized Hadamard transform," Adv. Adapt. Data Anal., vol. 3, no. 1–2, pp. 115–126, 2011. https://doi.org/10.1142/S1793536911000787
-
 ## Reproducibility and resources
 
 Native routines default to one thread. Set `options(sublime.threads = 2L)`
@@ -154,3 +142,15 @@ support `set.seed()`; HT and SRHT with `seed = NULL` use native entropy.
 Windows parallel workers attach to shared bigmemory backing files in the
 R temporary directory. Each worker copies only its sampled rows for fitting.
 Workers and backing files are cleaned up on completion or error.
+
+## References
+IBOSS: H. Wang, M. Yang, and J. Stufken, “Information-based optimal subdata selection for big
+data linear regression,” Journal of the American Statistical Association, vol. 114, no. 525,
+pp. 393–405, 2019. https://doi.org/10.1080/01621459.2017.1408468
+
+GenIBOSS: J. Yu, J. Liu, and H. Wang, "Information-based optimal subdata selection for non-linear models," Statistical Papers, vol. 64, no. 4, pp. 1069–1093, Aug. 2023. https://doi.org/10.1007/s00362-023-01430-3
+
+CLASS: R. Singh and J. Stufken, “Subdata selection with a large number of variables,” The New
+England Journal of Statistics in Data Science, vol. 1, no. 3, pp. 426–438, 2023. https://doi.org/10.51387/23-NEJSDS36
+
+SRHT: J. A. Tropp, "Improved analysis of the subsampled randomized Hadamard transform," Adv. Adapt. Data Anal., vol. 3, no. 1–2, pp. 115–126, 2011. https://doi.org/10.1142/S1793536911000787
