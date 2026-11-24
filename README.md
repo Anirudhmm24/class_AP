@@ -18,6 +18,11 @@ These algorithms are:
 install.packages("sublime_0.1.0.tar.gz", repos = NULL, type = "source")
 library(sublime)
 ```
+Alternatively, clone the repository using git clone and run the following commands:
+```r
+install.packages("/path/to/folder", repos = NULL, type = "source")
+library(sublime)
+```
 
 ## Usage
 
