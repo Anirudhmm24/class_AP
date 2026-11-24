@@ -131,6 +131,15 @@ res$beta_final
 res$mse
 ```
 
+### HT()
+
+The data matrix and the target vector are multiplied by a Hadamard Matrix and a diagonal matrix with 1s and -1s (chosen randomly).
+
+```r
+res <- HT(X = X, y = y, intercept = TRUE)
+str(res)
+```
+
 ## Reproducibility and resources
 
 Native routines default to one thread. Set `options(sublime.threads = 2L)`
